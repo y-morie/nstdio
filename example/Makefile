@@ -5,7 +5,7 @@ SOBJS=libnstdio.so
 LIB=../lib
 INC=../include
 CFLAGS=-Wall -I$(INC)
-LFLAGS=-L$(LIB) -lnstdio -pthread
+LFLAGS=-L$(LIB) -lnstdio -lpthread
 RM=rm
 
 all: sv cl test-ping test-pingd test-pingc
