@@ -25,8 +25,11 @@ static void ppsync(ND *nd){
     char dammy;
     
     dammy = 'x';
+
+#if DEBUG
     fprintf(stdout, "nd->sock = %d\n", nd->sock);
     fflush(stdout);
+#endif
     
     write(nd->sock, &dammy, sizeof(dammy));
     recv(nd->sock, &dammy, sizeof(dammy), MSG_WAITALL);
@@ -36,25 +39,51 @@ static void *comm_thread_func(void *arnd){
     
     /* message handl queue */
     uint64_t qidx = 0;
-    ND *nd;
-    
+    volatile ND *nd;
+    uint64_t rc;
     nd = (ND *)arnd;
-
+    
     while (1) {
         qidx = nd->hqhead % MAX_HANDLE_QSIZE;
+#if DEBUG_CH_LOOP_CHK        
+        fprintf(stdout, "nd->hdlq[%lu] %p st %d\n", qidx, & nd->hdlq[qidx], nd->hdlq[qidx].status);
+        fflush(stdout);
+#endif
+        if(&nd->hdlq[qidx] == NULL){
+            fprintf(stdout, "nd->hdlq[%lu] %p\n", qidx, & nd->hdlq[qidx]);
+            exit(1);
+        }
         if (nd->hdlq[qidx].status == START){
             switch(nd->hdlq[qidx].type){
             case WRITE:
+#if DEBUG
                 fprintf(stdout, "WRITE: hd %lu tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
-                nd->hdlq[qidx].status = write(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size);
+                fflush(stdout);
+#endif
+                rc = (uint64_t)write(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size);
+                if (rc > 0) {
+                    nd->hdlq[qidx].msize = rc;
+                }
                 nd->hqhead++;
-                fprintf(stdout, "WRITE: hd %lu \n",nd->hqhead);
+#if DEBUG
+                fprintf(stdout, "WRITE: hd %lu mc %lu rc %lu\n",nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fflush(stdout);
+#endif
                 break;
             case READ:
-                fprintf(stdout, "READ: hd %lu tp %d\n",nd->hqhead,  nd->hdlq[qidx].type);
-                nd->hdlq[qidx].status = recv(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size, MSG_WAITALL);
+#if DEBUG
+                fprintf(stdout, "READ: hd %lu tp %d\n", nd->hqhead,  nd->hdlq[qidx].type);
+                fflush(stdout);
+#endif
+                rc = (uint64_t)recv(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size, MSG_WAITALL);
+                if (rc > 0) {
+                    nd->hdlq[qidx].msize = rc;
+                }
                 nd->hqhead++;
-                fprintf(stdout, "READ: hd %lu \n",nd->hqhead);
+#if DEBUG
+                fprintf(stdout, "READ: hd %lu mc %lu rc %lu\n", nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fflush(stdout);
+#endif
                 break;
             default:
                 break;
@@ -66,20 +95,23 @@ static void *comm_thread_func(void *arnd){
     }
 }
 
-HNDL *nwrite(ND *nd, void *addr, size_t size){
+NHDL *nwrite( ND *nd, void *addr, size_t size){
     
-    HNDL *hdl;
+    NHDL *hdl;
     uint64_t id, qidx;
     
-    hdl = (HNDL *)malloc(sizeof(HNDL));
+    hdl = (NHDL *)malloc(sizeof(NHDL));
     
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
-    
-    //fprintf(stdout, "%lu %lu %p",qidx ,size, nd->hdlq);
-    nd->hdlq[qidx].size = size;
+
+#if DEBUG
+    fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
+    fflush(stdout);
+#endif
+
     nd->hdlq[qidx].addr = addr;
-   
+    nd->hdlq[qidx].size = size;   
     nd->hdlq[qidx].type = WRITE;
     nd->hdlq[qidx].status = START;
 
@@ -91,15 +123,20 @@ HNDL *nwrite(ND *nd, void *addr, size_t size){
     return hdl;
 }
 
-HNDL *nread(ND *nd, void *addr, size_t size){
+NHDL *nread( ND *nd, void *addr, size_t size){
     
-    HNDL *hdl;
+    NHDL *hdl;
     uint64_t id, qidx;
     
-    hdl = (HNDL *)malloc(sizeof(HNDL));
+    hdl = (NHDL *)malloc(sizeof(NHDL));
     
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
+
+#if DEBUG
+    fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
+    fflush(stdout);
+#endif
     
     nd->hdlq[qidx].addr = addr;
     nd->hdlq[qidx].size = size;
@@ -115,7 +152,7 @@ HNDL *nread(ND *nd, void *addr, size_t size){
 }
 
 
-int nquery(HNDL *hdl){
+int nquery(NHDL *hdl){
 
     if (hdl->id < hdl->nd->hqhead){
         return 0;
@@ -138,7 +175,7 @@ ND *nopen(NET *nt){
     uint64_t hqtail = 0;
     uint64_t hqhead = 0;
     
-    ND *nd;
+    volatile ND *nd;
     
     int rc = 0;
     int errno;
@@ -180,7 +217,7 @@ ND *nopen(NET *nt){
     nd->hqtail = hqtail;
     nd->hdlq = (HQ *)malloc(sizeof(HQ) * MAX_HANDLE_QSIZE);
     
-    memset(nd->hdlq, 0, sizeof(HQ) * MAX_HANDLE_QSIZE);
+    memset((char *)nd->hdlq, 0, sizeof(HQ) * MAX_HANDLE_QSIZE);
     
     /* generate server socket */
     if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -188,9 +225,10 @@ ND *nopen(NET *nt){
         rc = -1;
         goto exit;
     }
-    
+#if DEBUG
     fprintf(stdout, "sv flagcheck section\n");
     fflush(stdout);
+#endif
     
     if(svflag == SERVER){ 
         /* generate destination address */
@@ -198,8 +236,10 @@ ND *nopen(NET *nt){
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = nd->lip;
         addr.sin_port = htons(nd->lport);
+#if DEBUG
         fprintf(stdout, "lip %u lp %u rip %u rp %u\n", nd->lip, nd->lport, nd->rip, nd->rport);
         fflush(stdout);
+#endif
         /* bind socket */
         rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
         if(rc == -1){
@@ -236,8 +276,10 @@ ND *nopen(NET *nt){
         addr.sin_addr.s_addr = nd->rip;
         addr.sin_port = htons(nd->rport);
         
+#if DEBUG
         fprintf(stdout, "lip %u lp %u rip %u rp %u\n", nd->lip, nd->lport, nd->rip, nd->rport);
         fflush(stdout);
+#endif
         while (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0){
             if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED) {
                 perror("connect() failed:");
@@ -254,12 +296,11 @@ ND *nopen(NET *nt){
         goto exit;
     }
     
-    pthread_create(&(nd->comm_thread_id), NULL, comm_thread_func, (void *)nd);
+    pthread_create((pthread_t *)&(nd->comm_thread_id), NULL, comm_thread_func, (void *)nd);
     
-    ppsync(nd);
+    ppsync((ND *)nd);
     
-    return nd;
-
+    return (ND *)nd;
 
 exit:
     exit(1);

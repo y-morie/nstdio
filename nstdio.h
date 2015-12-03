@@ -19,6 +19,7 @@ typedef struct HandleQueue {
     int type;
     size_t size;
     int status;
+    uint64_t msize;
 } HQ;
 
 typedef struct NetworkDiscrptor {
@@ -33,20 +34,20 @@ typedef struct NetworkDiscrptor {
     int sock;
     uint64_t hqhead;
     uint64_t hqtail;
-    HQ *hdlq;
+    volatile HQ *hdlq;
 } ND;
 
 typedef struct Handle {
     uint64_t id;
     ND *nd;
-} HNDL;
+} NHDL;
 
 ND *nopen(NET *nt);
 
 void nclose(ND *nd);
 
-HNDL *nwrite(ND *nd, void *addr, size_t size);
+NHDL *nwrite(ND *nd, void *addr, size_t size);
 
-HNDL *nread(ND *nd, void *addr, size_t size);
+NHDL *nread(ND *nd, void *addr, size_t size);
 
-int nquery(HNDL *hdl);
+int nquery(NHDL *hdl);

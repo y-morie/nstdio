@@ -6,7 +6,7 @@
 int main(int argc, char **argv){
     NET nt;
     ND *nd;
-    HNDL *hdl;
+    NHDL *hdl;
     char *str;
     
     nt.lip_addr = strdup(argv[1]);

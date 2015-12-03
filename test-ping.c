@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
     NET nt;
     ND *nd;
-    HNDL *hdl;
+    NHDL *hdl;
     int i;
     int count;
     char str[256];
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
             printf("cl data recv\n");
         }        
         else if (argc == 5){
-            printf("sv start nwrite\n");
+            printf("sv start nread\n");
             hdl = nread(nd, str, 256);
             while(nquery(hdl));
             fprintf(stdout, "%s\n", str);
