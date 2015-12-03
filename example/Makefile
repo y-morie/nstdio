@@ -4,7 +4,7 @@ OBJS=test-sv.o test-cl.o test-ping.o test-pingd.o test-pingc.o
 SOBJS=libnstdio.so
 LIB=../lib
 INC=../include
-CFLAGS=-Wall -I$(INC)
+CFLAGS=-Wall -I. -I$(INC) 
 LFLAGS=-L$(LIB) -lnstdio -lpthread
 RM=rm
 
