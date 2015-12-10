@@ -9,7 +9,7 @@
 #include <netinet/in.h> // sockaddr_in
 #include <arpa/inet.h> // inet_addr
 #include <errno.h>
-#include "nstdio.h"
+#include <nstdio.h>
 
 #define SERVER 1
 #define CLIENT 2
