@@ -4,39 +4,31 @@
 #include "nstdio.h"
 
 int main(int argc, char **argv){
-    NET nt;
+    NET *nt;
     ND *nd;
     NHDL *hdl;
     char *str;
-    char *ch='\0';
-    char *str2="aaaaaa";
     
-    nt.lip_addr = strdup(argv[1]);
-    nt.lport = atoi(argv[2]);
-    nt.rip_addr = strdup(argv[3]);
-    nt.rport = atoi(argv[4]);
-    nt.Dflag = TCP;
-    str = strdup(argv[5]);
-    sprintf(str, "%s%s%s", str, ch, str2);
-        
-
-    printf("sv start nopen \n");
-    nd = nopen(&nt);
-    printf("sv finish nopen \n");
+    nt = setnet(argv[1], atoi(argv[2]), NTCP);
+    str = malloc(sizeof(char)*256);
+    printf("cl start nopen \n");
+    nd = nopen(nt, "r");
+    printf("cl finish nopen \n");
     
-    printf("sv start nread \n");
-    hdl = nwrite(nd, str, 256);
-    printf("sv finish nread \n");
+    printf("cl start nread \n");
+    hdl = nread(nd, str, 256);
+    printf("cl finish nread \n");
 
-    printf("sv start nquery \n");
+    printf("cl start nquery \n");
     while(nquery(hdl));
-    printf("sv finish nquery \n");
-        
-    printf("sv start nclose \n");
-    nclose(nd);
-    printf("sv finish nclose \n");
+    printf("cl finish nquery \n");
+    printf("get data: %s\n", str);
     
-    printf("sv finish\n");
+    printf("cl start nclose \n");
+    nclose(nd);
+    printf("cl finish nclose \n");
+    freenet(nt);
+    printf("cl finish\n");
     
     return 0;
 }

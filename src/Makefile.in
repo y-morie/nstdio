@@ -74,6 +74,9 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libnstdio_la_DEPENDENCIES =
 am_libnstdio_la_OBJECTS = nstdio.lo
 libnstdio_la_OBJECTS = $(am_libnstdio_la_OBJECTS)
+libppstream_la_LIBADD =
+am_libppstream_la_OBJECTS = ppstream.lo
+libppstream_la_OBJECTS = $(am_libppstream_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__depfiles_maybe = depfiles
@@ -87,8 +90,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(libnstdio_la_SOURCES)
-DIST_SOURCES = $(libnstdio_la_SOURCES)
+SOURCES = $(libnstdio_la_SOURCES) $(libppstream_la_SOURCES)
+DIST_SOURCES = $(libnstdio_la_SOURCES) $(libppstream_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -203,9 +206,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_srcdir)/include
-lib_LTLIBRARIES = libnstdio.la
-libnstdio_la_SOURCES = nstdio.c nstdio.h
+lib_LTLIBRARIES = libnstdio.la libppstream.la
+libnstdio_la_SOURCES = nstdio.c nstdio.h ppstream.h
 libnstdio_la_LIBADD = -lpthread
+libppstream_la_SOURCES = ppstream.c ppstream.h
 all: all-am
 
 .SUFFIXES:
@@ -273,6 +277,8 @@ clean-libLTLIBRARIES:
 	done
 libnstdio.la: $(libnstdio_la_OBJECTS) $(libnstdio_la_DEPENDENCIES) 
 	$(LINK) -rpath $(libdir) $(libnstdio_la_OBJECTS) $(libnstdio_la_LIBADD) $(LIBS)
+libppstream.la: $(libppstream_la_OBJECTS) $(libppstream_la_DEPENDENCIES) 
+	$(LINK) -rpath $(libdir) $(libppstream_la_OBJECTS) $(libppstream_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -281,6 +287,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nstdio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ppstream.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

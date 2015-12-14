@@ -1,48 +1,20 @@
-#include <stdint.h>
-#include <pthread.h>
+#ifndef __INCLUDE_NSTDIO_H__
+#define __INCLUDE_NSTDIO_H__
 
-#define TCP    0
-#define UDP    1
-#define IB_RC 10
+#include <ppstream.h>
 
-typedef struct NetworkInfo {
-    char *lip_addr;
-    char *rip_addr;
-    uint16_t lport;
-    uint16_t rport;
-    uint32_t Dflag;
-} NET;
+#define NTCP PPSTREAM_TCP
+#define NUDP PPSTREAM_UDP
+#define NIBRC PPSTREAM_IBRC
+#define NIBUD PPSTREAM_IBUD
 
-typedef struct HandleQueue {
-    uint64_t id;
-    void *addr;
-    int type;
-    size_t size;
-    int status;
-    uint64_t msize;
-} HQ;
+typedef ppstream_networkinfo_t NET;
 
-typedef struct NetworkDiscrptor {
-    uint32_t lip;
-    uint32_t rip;
-    uint16_t lport;
-    uint16_t rport;
-    uint32_t svflag;
-    uint32_t Dflag;
-    pthread_t comm_thread_id;
-    int finflag;
-    int sock;
-    uint64_t hqhead;
-    uint64_t hqtail;
-    volatile HQ *hdlq;
-} ND;
+typedef ppstream_networkdescriptor_t ND;
 
-typedef struct Handle {
-    uint64_t id;
-    ND *nd;
-} NHDL;
+typedef ppstream_handle_t NHDL;
 
-ND *nopen(NET *nt);
+ND *nopen(NET *nt, char *mode);
 
 void nclose(ND *nd);
 
@@ -51,3 +23,9 @@ NHDL *nwrite(ND *nd, void *addr, size_t size);
 NHDL *nread(ND *nd, void *addr, size_t size);
 
 int nquery(NHDL *hdl);
+
+NET *setnet(char *ip_add, uint16_t port, uint32_t Dflag);
+
+void freenet(NET *nt);
+
+#endif

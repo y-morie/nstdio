@@ -2,4 +2,4 @@
 # Makefile.am for NSTDIO
 #
 
-include_HEADERS = nstdio.h
+include_HEADERS = nstdio.h ppstream.h

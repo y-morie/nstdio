@@ -197,17 +197,17 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src/include
-LDADD = $(top_builddir)/src/libnstdio.la
+LDADD = $(top_builddir)/src/libnstdio.la $(top_builddir)/src/libppstream.la
 sv_DEPENDENCIES = $(LDADD)
-sv_SOURCES = test-sv.c nstdio.h
+sv_SOURCES = test-sv.c nstdio.h ppstream.h
 cl_DEPENDENCIES = $(LDADD)
-cl_SOURCES = test-cl.c nstdio.h
+cl_SOURCES = test-cl.c nstdio.h ppstream.h
 test_ping_DEPENDENCIES = $(LDADD)
-test_ping_SOURCES = test-ping.c nstdio.h
+test_ping_SOURCES = test-ping.c nstdio.h ppstream.h
 test_pingd_DEPENDENCIES = $(LDADD)
-test_pingd_SOURCES = test-pingd.c nstdio.h
+test_pingd_SOURCES = test-pingd.c nstdio.h ppstream.h
 test_pingc_DEPENDENCIES = $(LDADD)
-test_pingc_SOURCES = test-pingc.c nstdio.h
+test_pingc_SOURCES = test-pingc.c nstdio.h ppstream.h
 all: all-am
 
 .SUFFIXES:
