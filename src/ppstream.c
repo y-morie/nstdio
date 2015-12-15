@@ -281,6 +281,8 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
     nd->finflag = 1;
     pthread_join(nd->comm_thread_id, NULL);
     
+    ppstream_sync(nd);
+    
     close(nd->sock);
     if (NULL != nd) {
         free(nd);

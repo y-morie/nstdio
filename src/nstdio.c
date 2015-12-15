@@ -46,10 +46,10 @@ ND *nopen(NET *nt, char *mode){
     int errno;
     
     
-    if(strcmp(mode, "r") == 0){
+    if(strcmp(mode, "w") == 0){
         nt->scflag = PPSTREAM_CLIENT;
     }
-    else if(strcmp(mode, "w") == 0){
+    else if(strcmp(mode, "r") == 0){
         nt->scflag = PPSTREAM_SERVER;
     }
     else{

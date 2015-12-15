@@ -2,7 +2,7 @@
 #include <string.h>
 #include <unistd.h> // sleep
 #include <stdlib.h>
-#include "nstdio.h"
+#include <nstdio.h>
 
 #define DCOUNT 1024LLU * 1024LLU * 128LLU
 #define SIZE (DCOUNT * 8LLU)
@@ -23,29 +23,27 @@ int main(int argc, char **argv) {
 
     nt = setnet(argv[1], atoi(argv[2]), NTCP);
     printf("cl start nopen \n");
-    nd = nopen(nt, "r");
+    nd = nopen(nt, "w");
     printf("cl finish nopen \n");
         
     for(i = 0; i < DCOUNT; i++){
-        str[i] = 0;
+        str[i] = (double)i;
     }
     
     count = 1;     
     for(i = 0; i < count ; i++){
         printf("cl start nwrite\n");
-        hdl = nread(nd, str, SIZE); 
+        hdl = nwrite(nd, str, SIZE); 
         printf("cl finish nwrite\n");
         printf("cl start nquery\n");  
         while(nquery(hdl));
         printf("cl finish nquery\n");
     }
+
     printf("cl start nclose \n");
     nclose(nd);
     printf("cl finish nclose \n");
-
-    printf("cl %lf %lf\n", str[0], str[DCOUNT-1]);
-    printf("cl finish\n");
-
+    
     freenet(nt);
     printf("cl finish\n");
     

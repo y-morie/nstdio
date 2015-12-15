@@ -13,18 +13,18 @@ int main(int argc, char **argv) {
     int count;
     char str[256];
  
-    if(argc == 3){
+    if(argc == 4){
         nt = setnet(argv[1], atoi(argv[2]), NTCP);
         printf("cl start nopen \n");
-        nd = nopen(nt, "r");
+        nd = nopen(nt, "w");
         printf("cl finish nopen \n");
+        sprintf(str, "%s", argv[3]);
     }
-    else if (argc == 4){
+    else if (argc == 3){
         nt = setnet(argv[1], atoi(argv[2]), NTCP);
         printf("sv start nopen \n");
-        nd = nopen(nt, "w");
+        nd = nopen(nt, "r");
         printf("sv finish nopen \n");
-        sprintf(str, "%s", argv[3]);
     }
     else {
         fprintf(stderr, "command error\n");
@@ -33,20 +33,21 @@ int main(int argc, char **argv) {
     
     count = 4;
     for(i = 0; i < count ; i++){
-        if (argc == 3){
-            printf("cl start nread\n"); 
-            hdl = nread(nd, str, 256);            
+        if (argc == 4){
+            printf("cl start nwrite\n"); 
+            sprintf(str, "%s_%d", str, i);
+            hdl = nwrite(nd, str, 256);            
             while(nquery(hdl));
             printf("cl finish nquery\n"); 
-            fprintf(stdout, "%s\n", str);
-            printf("cl data recv\n");
-        }        
-        else if (argc == 4){
-            printf("sv start nwrite\n");
-            sprintf(str, "%s_%d", str, i);
-            hdl = nwrite(nd, str, 256);
+          }        
+        else if (argc == 3){
+            printf("sv start nread\n");
+            hdl = nread(nd, str, 256);
             while(nquery(hdl));
             printf("sv finish nquery\n"); 
+            fprintf(stdout, "sv %s\n", str);
+            printf("sv data recv\n");
+        
         }
     }
     printf("start nclose \n");
