@@ -34,11 +34,13 @@ typedef struct ppstream_networkdescriptor{
     uint32_t scflag;
     uint32_t Dflag;
     pthread_t comm_thread_id;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
     int finflag;
     int sock;
     uint64_t hqhead;
     uint64_t hqtail;
-    volatile ppstream_handlequeue_t *hdlq;
+    ppstream_handlequeue_t *hdlq;
 } ppstream_networkdescriptor_t;
 
 typedef struct ppstream_handle {

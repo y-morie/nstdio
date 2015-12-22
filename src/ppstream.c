@@ -8,19 +8,17 @@
 #include <errno.h>
 #include <ppstream.h>
 
-#define SERVER 1
-#define CLIENT 2
+#define PPS_WRITE 1
+#define PPS_READ  2
 
-#define WRITE 1
-#define READ  2
-
-#define START 1
+#define PPS_COMP  0
+#define PPS_START 1
 
 #define MAX_HANDLE_QSIZE 65536
 
 static void ppstream_sync(ppstream_networkdescriptor_t *nd){
     char dammy;
-    
+        
     dammy = 'x';
 
 #if DEBUG
@@ -36,12 +34,15 @@ static void *comm_thread_func(void *arnd){
     
     /* message handl queue */
     uint64_t qidx = 0;
-    volatile ppstream_networkdescriptor_t *nd;
+    ppstream_networkdescriptor_t *nd;
     uint64_t rc;
     
     nd = (ppstream_networkdescriptor_t *) arnd;
     
     while (1) {
+        pthread_mutex_lock(&(nd->mutex));
+        /* if handle queue is empty, the comm. thread sleeps. */
+        if (nd->hqtail - nd->hqhead == 0) pthread_cond_wait(&(nd->cond), &(nd->mutex));
         qidx = nd->hqhead % MAX_HANDLE_QSIZE;
 #if DEBUG_CH_LOOP_CHK        
         fprintf(stdout, "nd->hdlq[%lu] %p st %d\n", qidx, & nd->hdlq[qidx], nd->hdlq[qidx].status);
@@ -51,11 +52,11 @@ static void *comm_thread_func(void *arnd){
             fprintf(stdout, "nd->hdlq[%lu] %p\n", qidx, & nd->hdlq[qidx]);
             exit(1);
         }
-        if (nd->hdlq[qidx].status == START){
+        if (nd->hdlq[qidx].status == PPS_START){
             switch(nd->hdlq[qidx].type){
-            case WRITE:
+            case PPS_WRITE:
 #if DEBUG
-                fprintf(stdout, "WRITE: hd %lu tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
+                fprintf(stdout, "PPS_WRITE: hd %lu tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
                 fflush(stdout);
 #endif
                 rc = (uint64_t)write(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size);
@@ -63,23 +64,26 @@ static void *comm_thread_func(void *arnd){
                     nd->hdlq[qidx].msize = rc;
                 }
                 nd->hqhead++;
+                nd->hdlq[qidx].status = PPS_COMP;
 #if DEBUG
-                fprintf(stdout, "WRITE: hd %lu mc %lu rc %lu\n",nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fprintf(stdout, "PPS_WRITE: hd %lu mc %lu rc %lu\n",nd->hqhead, nd->hdlq[qidx].msize, rc);
                 fflush(stdout);
 #endif
                 break;
-            case READ:
+            case PPS_READ:
 #if DEBUG
-                fprintf(stdout, "READ: hd %lu tp %d\n", nd->hqhead,  nd->hdlq[qidx].type);
+                fprintf(stdout, "PPS_READ: hd %lu tp %d\n", nd->hqhead,  nd->hdlq[qidx].type);
                 fflush(stdout);
 #endif
                 rc = (uint64_t)recv(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size, MSG_WAITALL);
+                perror("error");
                 if (rc > 0) {
                     nd->hdlq[qidx].msize = rc;
                 }
                 nd->hqhead++;
+                nd->hdlq[qidx].status = PPS_COMP;
 #if DEBUG
-                fprintf(stdout, "READ: hd %lu mc %lu rc %lu\n", nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fprintf(stdout, "PPS_READ: hd %lu mc %lu rc %lu\n", nd->hqhead, nd->hdlq[qidx].msize, rc);
                 fflush(stdout);
 #endif
                 break;
@@ -90,6 +94,7 @@ static void *comm_thread_func(void *arnd){
         if (nd->finflag == 1){
             return 0;
         }
+        pthread_mutex_unlock(&(nd->mutex));
     }
 }
 
@@ -99,7 +104,7 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr,
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
-    
+    memset(hdl, 0, sizeof(hdl));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
 
@@ -107,16 +112,19 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr,
     fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
-
+    /* access handle queue */
+    pthread_mutex_lock(&(nd->mutex));
     nd->hdlq[qidx].addr = addr;
     nd->hdlq[qidx].size = size;   
-    nd->hdlq[qidx].type = WRITE;
-    nd->hdlq[qidx].status = START;
-
+    nd->hdlq[qidx].type = PPS_WRITE;
+    nd->hdlq[qidx].status = PPS_START;
     nd->hqtail++;
+    pthread_cond_signal(&(nd->cond));
+    pthread_mutex_unlock(&(nd->mutex));
     
     hdl->id = id;
     hdl->nd = nd;
+    hdl->msize = 0;
     
     return hdl;
 }
@@ -127,7 +135,7 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
-    
+    memset(hdl, 0, sizeof(hdl));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
 
@@ -135,27 +143,33 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
     fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
-    
+    /* access handle queue */
+    pthread_mutex_lock(&(nd->mutex));
     nd->hdlq[qidx].addr = addr;
     nd->hdlq[qidx].size = size;
-    nd->hdlq[qidx].type = READ;
-    nd->hdlq[qidx].status = START;
-    
+    nd->hdlq[qidx].type = PPS_READ;
+    nd->hdlq[qidx].status = PPS_START;
     nd->hqtail++;
+    pthread_cond_signal(&(nd->cond));
+    pthread_mutex_unlock(&(nd->mutex));
     
     hdl->id = id;
     hdl->nd = nd;
+    hdl->msize = 0;
     
     return hdl;
 }
 
 int ppstream_test(ppstream_handle_t *hdl){
-
+    
+    pthread_mutex_lock(&(hdl->nd->mutex));
     if (hdl->id < hdl->nd->hqhead){
         hdl->msize =  hdl->nd->hdlq[hdl->id].msize ;
+        pthread_mutex_unlock(&(hdl->nd->mutex));
         return 0;
     }
     else{
+        pthread_mutex_unlock(&(hdl->nd->mutex));
         return 1;
     }
 }
@@ -165,37 +179,43 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     int sock, sock_accept;
     struct sockaddr_in addr;
     socklen_t addrlen;
-    int scflag;
+    int scflag; /* flag of server or client */
     int on; /* socket option */
         
     uint64_t hqtail = 0;
     uint64_t hqhead = 0;
     
-    volatile ppstream_networkdescriptor_t *nd;
+    ppstream_networkdescriptor_t *nd;
     
     int rc = 0;
     int errno;
     
+    /* malloc networkdescriptor */
     nd = (ppstream_networkdescriptor_t *)malloc(sizeof(ppstream_networkdescriptor_t));
     
+    /* set ip address and port */
     nd->ip = inet_addr(nt->ip_addr);
     nd->port = htons(nt->port);
     nd->sock = -1;
     
+    /* set flag which is define server or client */
     nd->scflag = nt->scflag;
     if(nt->scflag != PPSTREAM_CLIENT && nt->scflag != PPSTREAM_SERVER){
         fprintf(stderr, "error: not set PPSTREAM_CLIENT or PPSTREAM_SERVER.\n");
         exit(1);
     }
-        
+    
+    /* set Device flag ex) TCP or UDP, IB RC, IB UD etc. */
     nd->Dflag = nt->Dflag;
+    /* finalization flag of comm. thread */
     nd->finflag = 0;
     
-    scflag = nd->scflag;
+    /* set handle queue poiner */
     nd->hqhead = hqhead;
     nd->hqtail = hqtail;
     nd->hdlq = (ppstream_handlequeue_t *)malloc(sizeof(ppstream_handlequeue_t) * MAX_HANDLE_QSIZE);
     
+    /* clear handle queue by 0 */
     memset((char *)nd->hdlq, 0, sizeof(ppstream_handlequeue_t) * MAX_HANDLE_QSIZE);
     
     /* generates socket for server and client */
@@ -218,6 +238,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     fflush(stdout);
 #endif
     
+    scflag = nd->scflag;
     if(scflag == PPSTREAM_SERVER){ 
         /* bind socket */
         rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
@@ -265,20 +286,25 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         fprintf(stderr, "error: not set PPSTREAM_CLIENT or PPSTREAM_SERVER.\n");
         goto exit;
     }
+
+    rc = pthread_cond_init(&(nd->cond), NULL);
+    pthread_mutex_init(&(nd->mutex), NULL);
     
-    pthread_create((pthread_t *)&(nd->comm_thread_id), NULL, comm_thread_func, (void *)nd);
+    /* initialize communication thread */
+    rc = pthread_create((pthread_t *)&(nd->comm_thread_id), NULL, comm_thread_func, (void *)nd);
     
     ppstream_sync((ppstream_networkdescriptor_t *)nd);
     
     return (ppstream_networkdescriptor_t *)nd;
 
 exit:
-    exit(1);
+    return NULL;
 }
 
 void ppstream_close(ppstream_networkdescriptor_t *nd){
     
     nd->finflag = 1;
+    pthread_cond_signal(&(nd->cond));
     pthread_join(nd->comm_thread_id, NULL);
     
     ppstream_sync(nd);

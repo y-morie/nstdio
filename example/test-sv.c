@@ -10,7 +10,8 @@ int main(int argc, char **argv){
     char *str;
         
     nt = setnet(argv[1], atoi(argv[2]), NTCP);
-
+    str = (char *)malloc(sizeof(char) * 256);
+    
     printf("sv start nopen \n");
     nd = nopen(nt, "r");
     printf("sv finish nopen \n");
@@ -22,7 +23,7 @@ int main(int argc, char **argv){
     printf("sv start nquery \n");
     while(nquery(hdl));
     printf("sv finish nquery \n");
-    
+    printf("sv msize %lu\n", hdl->msize);
     printf("get data: %s\n", str);
     
     printf("sv start nclose \n");
