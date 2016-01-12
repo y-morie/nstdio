@@ -14,6 +14,15 @@ typedef ppstream_networkdescriptor_t ND;
 
 typedef ppstream_handle_t NHDL;
 
+/**
+ * \brief ネットワークのオープンする。
+ *   
+ * nopen関数は、ntにより指定されるネットワークをmodeがさすモードでオープンし、
+ * ネットワークにストリームを結びつける。
+ * 
+ * \param nt ネットワーク情報の参照
+ * \param mode モード 
+*/
 ND *nopen(NET *nt, char *mode);
 
 void nclose(ND *nd);

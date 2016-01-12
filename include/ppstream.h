@@ -1,5 +1,5 @@
 #ifndef __INCLUDE_PPSTREAM_H__
-#define __INCLUDE_PPSTERAM_H__
+#define __INCLUDE_PPSTREAM_H__
 
 #include <stdint.h>
 #include <pthread.h>
