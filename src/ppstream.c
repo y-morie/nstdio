@@ -16,7 +16,7 @@
 
 #define MAX_HANDLE_QSIZE 65536
 
-static void ppstream_sync(ppstream_networkdescriptor_t *nd){
+void ppstream_sync(ppstream_networkdescriptor_t *nd){
     char dammy;
         
     dammy = 'x';

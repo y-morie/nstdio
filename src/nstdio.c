@@ -10,6 +10,13 @@
 
 #define UNDEFINE_SCFLAG  0
 
+void nsync(ND *nd){
+
+    ppstream_sync(nd);
+    
+    return;
+}
+
 NHDL *nwrite( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
@@ -82,4 +89,5 @@ void freenet(NET *nt){
     
     return;
 }
+
 

@@ -23,6 +23,8 @@ typedef ppstream_handle_t NHDL;
  * \param nt ネットワーク情報の参照
  * \param mode モード 
 */
+void nsync(ND *nd);
+
 ND *nopen(NET *nt, char *mode);
 
 void nclose(ND *nd);

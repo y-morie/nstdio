@@ -21,7 +21,7 @@ int main(int argc, char **argv){
     printf("cl start nopen \n");
     nd = nopen(nt, "w");
     printf("cl finish nopen \n");
-    
+    nsync(nd);
     printf("cl start nread \n");
     hdl = nwrite(nd, str, 256);
     printf("cl finish nread \n");

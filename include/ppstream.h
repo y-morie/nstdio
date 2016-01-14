@@ -49,6 +49,8 @@ typedef struct ppstream_handle {
     ppstream_networkdescriptor_t *nd;
 } ppstream_handle_t;
 
+void ppstream_sync(ppstream_networkdescriptor_t *nd);
+
 ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt);
 
 void ppstream_close(ppstream_networkdescriptor_t *nd);
