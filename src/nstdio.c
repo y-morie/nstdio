@@ -11,7 +11,7 @@
 #define UNDEFINE_SCFLAG  0
 
 void nsync(ND *nd){
-
+    
     ppstream_sync(nd);
     
     return;
@@ -36,11 +36,11 @@ NHDL *nread( ND *nd, void *addr, size_t size){
 }
 
 int nquery(NHDL *hdl){
-
+    
     int rc;
     
     rc = ppstream_test(hdl);
-
+    
     return rc;
 }
 

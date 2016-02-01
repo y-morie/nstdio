@@ -196,6 +196,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     /* set ip address and port */
     nd->ip = inet_addr(nt->ip_addr);
     nd->port = htons(nt->port);
+    //nd->port = nt->port;
     nd->sock = -1;
     
     /* set flag which is define server or client */
@@ -232,9 +233,11 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = nd->ip;
-    addr.sin_port = htons(nd->port);
+    addr.sin_port = nd->port; 
+    //addr.sin_port = nd->port;
 #if DEBUG
-    fprintf(stdout, "ip %u p %u %u", nd->ip, nd->port, nd->scflag);
+    fprintf(stdout, "ip %u p %u scf %u\n", nd->ip, nd->port, nd->scflag);
+    fprintf(stdout, "ip %u p %u scf %u\n", addr.sin_addr.s_addr, addr.sin_port, nd->scflag);
     fflush(stdout);
 #endif
     
