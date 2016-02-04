@@ -14,7 +14,7 @@
 
 typedef struct ppstream_networkinfo {
     char *ip_addr;
-    uint16_t port;
+    char *port;
     uint32_t Dflag;
     uint32_t scflag;
 } ppstream_networkinfo_t;
@@ -29,8 +29,8 @@ typedef struct ppstearm_handlequeue {
 } ppstream_handlequeue_t;
 
 typedef struct ppstream_networkdescriptor{
-    uint32_t ip;
-    uint16_t port;
+    char *ip;
+    char *port;
     uint32_t scflag;
     uint32_t Dflag;
     pthread_t comm_thread_id;
@@ -61,7 +61,7 @@ ppstream_handle_t *ppstream_output(ppstream_networkdescriptor_t *nd, void *addr,
 
 int ppstream_test(ppstream_handle_t *hdl);
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, uint16_t port, uint32_t scflag, uint32_t Dflag);
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, char *port, uint32_t scflag, uint32_t Dflag);
 
 void ppstream_free_networkinfo(ppstream_networkinfo_t *nt);
 

@@ -35,7 +35,7 @@ NHDL *nread(ND *nd, void *addr, size_t size);
 
 int nquery(NHDL *hdl);
 
-NET *setnet(char *ip_add, uint16_t port, uint32_t Dflag);
+NET *setnet(char *ip_add, char *port, uint32_t Dflag);
 
 void freenet(NET *nt);
 

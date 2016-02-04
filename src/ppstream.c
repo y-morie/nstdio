@@ -4,6 +4,7 @@
 #include <unistd.h> // close
 #include <sys/socket.h>  // accept, bind
 #include <netinet/in.h> // sockaddr_in
+#include <netdb.h>
 #include <arpa/inet.h> // inet_addr
 #include <errno.h>
 #include <ppstream.h>
@@ -28,6 +29,8 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
     
     write(nd->sock, &dammy, sizeof(dammy));
     recv(nd->sock, &dammy, sizeof(dammy), MSG_WAITALL);
+
+    return;
 }
 
 static void *comm_thread_func(void *arnd){
@@ -37,6 +40,7 @@ static void *comm_thread_func(void *arnd){
     ppstream_networkdescriptor_t *nd;
     uint64_t rc;
     
+    /* set network descriptor */
     nd = (ppstream_networkdescriptor_t *) arnd;
     
     while (1) {
@@ -44,16 +48,17 @@ static void *comm_thread_func(void *arnd){
         /* if handle queue is empty, the comm. thread sleeps. */
         if (nd->hqtail - nd->hqhead == 0) pthread_cond_wait(&(nd->cond), &(nd->mutex));
         qidx = nd->hqhead % MAX_HANDLE_QSIZE;
+
 #if DEBUG_CH_LOOP_CHK        
         fprintf(stdout, "nd->hdlq[%lu] %p st %d\n", qidx, & nd->hdlq[qidx], nd->hdlq[qidx].status);
         fflush(stdout);
 #endif
-        if(&nd->hdlq[qidx] == NULL){
+        if (&nd->hdlq[qidx] == NULL) {
             fprintf(stdout, "nd->hdlq[%lu] %p\n", qidx, & nd->hdlq[qidx]);
             exit(1);
         }
-        if (nd->hdlq[qidx].status == PPS_START){
-            switch(nd->hdlq[qidx].type){
+        if (nd->hdlq[qidx].status == PPS_START) {
+            switch (nd->hdlq[qidx].type) {
             case PPS_WRITE:
 #if DEBUG
                 fprintf(stdout, "PPS_WRITE: hd %lu tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
@@ -76,7 +81,9 @@ static void *comm_thread_func(void *arnd){
                 fflush(stdout);
 #endif
                 rc = (uint64_t)recv(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size, MSG_WAITALL);
-                perror("error");
+#if DEBUG
+                perror("recv return code:");
+#endif
                 if (rc > 0) {
                     nd->hdlq[qidx].msize = rc;
                 }
@@ -91,7 +98,7 @@ static void *comm_thread_func(void *arnd){
                 break;
             }
         }
-        if (nd->finflag == 1){
+        if (nd->finflag == 1) {
             return 0;
         }
         pthread_mutex_unlock(&(nd->mutex));
@@ -163,7 +170,7 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
 int ppstream_test(ppstream_handle_t *hdl){
     
     pthread_mutex_lock(&(hdl->nd->mutex));
-    if (hdl->id < hdl->nd->hqhead){
+    if (hdl->id < hdl->nd->hqhead) {
         hdl->msize =  hdl->nd->hdlq[hdl->id].msize ;
         pthread_mutex_unlock(&(hdl->nd->mutex));
         return 0;
@@ -176,12 +183,19 @@ int ppstream_test(ppstream_handle_t *hdl){
 
 ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
+    /* socket descriptor */
     int sock, sock_accept;
-    struct sockaddr_in addr;
+    /* for accept */
     socklen_t addrlen;
-    int scflag; /* flag of server or client */
-    int on; /* socket option */
-        
+    /* for getaddrinfo */
+    struct addrinfo *res = NULL;
+    struct addrinfo *ai;
+    struct addrinfo hints;
+    /* flag of server or client */
+    int scflag;
+    /* socket option */
+    int on; 
+    
     uint64_t hqtail = 0;
     uint64_t hqhead = 0;
     
@@ -194,14 +208,13 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     nd = (ppstream_networkdescriptor_t *)malloc(sizeof(ppstream_networkdescriptor_t));
     
     /* set ip address and port */
-    nd->ip = inet_addr(nt->ip_addr);
-    nd->port = htons(nt->port);
-    //nd->port = nt->port;
+    nd->ip = nt->ip_addr;
+    nd->port = nt->port;
     nd->sock = -1;
     
     /* set flag which is define server or client */
     nd->scflag = nt->scflag;
-    if(nt->scflag != PPSTREAM_CLIENT && nt->scflag != PPSTREAM_SERVER){
+    if (nt->scflag != PPSTREAM_CLIENT && nt->scflag != PPSTREAM_SERVER) {
         fprintf(stderr, "error: not set PPSTREAM_CLIENT or PPSTREAM_SERVER.\n");
         exit(1);
     }
@@ -219,37 +232,43 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     /* clear handle queue by 0 */
     memset((char *)nd->hdlq, 0, sizeof(ppstream_handlequeue_t) * MAX_HANDLE_QSIZE);
     
-    /* generates socket for server and client */
-    if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "socket() failed \n");
-        rc = -1;
-        goto exit;
-    }
 #if DEBUG
-    fprintf(stdout, "s or c flagcheck section\n");
-    fflush(stdout);
-#endif
-    /* generate address infomaition */
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = nd->ip;
-    addr.sin_port = nd->port; 
-    //addr.sin_port = nd->port;
-#if DEBUG
-    fprintf(stdout, "ip %u p %u scf %u\n", nd->ip, nd->port, nd->scflag);
-    fprintf(stdout, "ip %u p %u scf %u\n", addr.sin_addr.s_addr, addr.sin_port, nd->scflag);
+    fprintf(stdout, "server or client flagcheck section\n");
     fflush(stdout);
 #endif
     
+    /* generate address infomaition */
+    memset(&hints, 0, sizeof(hints));
+        
     scflag = nd->scflag;
-    if(scflag == PPSTREAM_SERVER){ 
-        /* bind socket */
-        rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
-        if(rc == -1){
-            fprintf(stderr, "setsockopt rc %d\n", rc);
+    if (scflag == PPSTREAM_SERVER) { 
+        /* set hints for getaddrinfo on server */
+        memset(&hints, 0, sizeof(hints)); 
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_PASSIVE;
+        
+        rc = getaddrinfo(nd->ip, nd->port, &hints, &res);
+        ai = res;
+#if DEBUG
+    fprintf(stdout, "ip %u p %u scf %u\n", ai->addr.sin_addr.s_addr, ai->addr.sin_port, nd->scflag);
+    fflush(stdout);
+#endif
+        /* generates socket for server and client */
+        if ((sock = socket (ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0) {
+            perror("socket() failed:");
+            rc = -1;
             goto exit;
         }
-        while (bind(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+
+        /* bind socket */
+        rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
+        if (rc == -1) {
+            fprintf(stderr, "setsockopt() failed: rc %d\n", rc);
+            goto exit;
+        }
+        
+        while (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
             if (errno != EADDRINUSE) {
                 perror("bind() failed:");
                 rc = -1;
@@ -264,8 +283,8 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
             goto exit;
         }
         
-        addrlen = sizeof(addr);
-        while ((sock_accept = accept(sock, (struct sockaddr *)&addr, &addrlen)) < 0) {
+        addrlen = ai->ai_addrlen;
+        while ((sock_accept = accept(sock, ai->ai_addr, &addrlen)) < 0) {
             perror("accept() failed:");
             goto exit;
         }
@@ -273,23 +292,50 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         
         nd->sock = sock_accept;
     }
-    else if (scflag == PPSTREAM_CLIENT){
-        while (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0){
-            if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED) {
-                perror("connect() failed:");
-                goto exit;
+    else if (scflag == PPSTREAM_CLIENT) {
+        /* set hints for getaddrinfo on server */
+        memset(&hints, 0, sizeof(hints)); 
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        
+        rc = getaddrinfo(nd->ip, nd->port, &hints, &res);
+        
+        /* set address info form getaddrinfo */
+        while(1) {
+            for (ai = res; ai; ai = ai->ai_next) {
+#if DEBUG
+    fprintf(stdout, "ip %u p %u scf %u\n", ai->addr.sin_addr.s_addr, ai->addr.sin_port, nd->scflag);
+    fflush(stdout);
+#endif
+                /* generates socket for server and client */
+                if ((sock = socket (ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0) {
+                    perror("socket() failed:");
+                    rc = -1;
+                    goto exit;
+                }
+                /* connect the ai->addr */
+                if (connect(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+                    if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED) {
+                        perror("connect() failed:");
+                        goto exit;
+                    }
+                }
+                else {
+                    nd->sock = sock;
+                    goto connect_success;
+                }
             }
-            else{
-                sleep(1);
-            }
+            sleep(1);
         }
-        nd->sock = sock;
     }
     else{
         fprintf(stderr, "error: not set PPSTREAM_CLIENT or PPSTREAM_SERVER.\n");
         goto exit;
     }
-
+    
+connect_success:
+    freeaddrinfo(res);
+    
     rc = pthread_cond_init(&(nd->cond), NULL);
     pthread_mutex_init(&(nd->mutex), NULL);
     
@@ -320,7 +366,7 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
     return ;
 }
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, uint16_t port, uint32_t scflag, uint32_t Dflag){
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, char *port, uint32_t scflag, uint32_t Dflag){
     ppstream_networkinfo_t *nt;
     
     nt = (ppstream_networkinfo_t *)malloc(sizeof(ppstream_networkinfo_t));
@@ -335,7 +381,7 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, uint16_t port, u
 
 void ppstream_free_networkinfo(ppstream_networkinfo_t *nt){
     
-    if(nt != NULL){
+    if (nt != NULL) {
         free(nt);
     }
     

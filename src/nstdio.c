@@ -74,7 +74,7 @@ void nclose(ND *nd){
     return ;
 }
 
-NET *setnet(char *ipaddr, uint16_t port, uint32_t Dflag){
+NET *setnet(char *ipaddr, char* port, uint32_t Dflag){
 
     NET *nt;
 
