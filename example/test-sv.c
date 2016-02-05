@@ -22,7 +22,7 @@ int main(int argc, char **argv){
     printf("sv: start nopen \n");
     nd = nopen(nt, "r");
     printf("sv: finish nopen \n");
-    nsync(nd);
+    //nsync(nd);
     printf("sv: start nread \n");
     hdl = nread(nd, str, 256);
     printf("sv: finish nread \n");

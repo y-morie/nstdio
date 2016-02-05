@@ -46,7 +46,8 @@ static void *comm_thread_func(void *arnd){
     while (1) {
         pthread_mutex_lock(&(nd->mutex));
         /* if handle queue is empty, the comm. thread sleeps. */
-        if (nd->hqtail - nd->hqhead == 0) pthread_cond_wait(&(nd->cond), &(nd->mutex));
+        if (nd->finflag != 1 && nd->hqtail - nd->hqhead == 0) pthread_cond_wait(&(nd->cond), &(nd->mutex));
+
         qidx = nd->hqhead % MAX_HANDLE_QSIZE;
 
 #if DEBUG_CH_LOOP_CHK        
@@ -57,6 +58,7 @@ static void *comm_thread_func(void *arnd){
             fprintf(stdout, "nd->hdlq[%lu] %p\n", qidx, & nd->hdlq[qidx]);
             exit(1);
         }
+        
         if (nd->hdlq[qidx].status == PPS_START) {
             switch (nd->hdlq[qidx].type) {
             case PPS_WRITE:
@@ -250,10 +252,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         
         rc = getaddrinfo(nd->ip, nd->port, &hints, &res);
         ai = res;
-#if DEBUG
-    fprintf(stdout, "ip %u p %u scf %u\n", ai->addr.sin_addr.s_addr, ai->addr.sin_port, nd->scflag);
-    fflush(stdout);
-#endif
+
         /* generates socket for server and client */
         if ((sock = socket (ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0) {
             perror("socket() failed:");
@@ -303,10 +302,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         /* set address info form getaddrinfo */
         while(1) {
             for (ai = res; ai; ai = ai->ai_next) {
-#if DEBUG
-    fprintf(stdout, "ip %u p %u scf %u\n", ai->addr.sin_addr.s_addr, ai->addr.sin_port, nd->scflag);
-    fflush(stdout);
-#endif
+                
                 /* generates socket for server and client */
                 if ((sock = socket (ai->ai_family, ai->ai_socktype, ai->ai_protocol)) < 0) {
                     perror("socket() failed:");
@@ -324,8 +320,8 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
                     nd->sock = sock;
                     goto connect_success;
                 }
+                sleep(1);
             }
-            sleep(1);
         }
     }
     else{
