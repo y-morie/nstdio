@@ -7,6 +7,7 @@
 #include <netdb.h>
 #include <arpa/inet.h> // inet_addr
 #include <errno.h>
+#include <inttypes.h> // 32/64bit for printf format
 #include <ppstream.h>
 
 #define PPS_WRITE 1
@@ -51,11 +52,11 @@ static void *comm_thread_func(void *arnd){
         qidx = nd->hqhead % MAX_HANDLE_QSIZE;
 
 #if DEBUG_CH_LOOP_CHK        
-        fprintf(stdout, "nd->hdlq[%lu] %p st %d\n", qidx, & nd->hdlq[qidx], nd->hdlq[qidx].status);
+        fprintf(stdout, "nd->hdlq[%" PRIu64 "] %p st %d\n", qidx, & nd->hdlq[qidx], nd->hdlq[qidx].status);
         fflush(stdout);
 #endif
         if (&nd->hdlq[qidx] == NULL) {
-            fprintf(stdout, "nd->hdlq[%lu] %p\n", qidx, & nd->hdlq[qidx]);
+            fprintf(stdout, "nd->hdlq[%" PRIu64 "] %p\n", qidx, & nd->hdlq[qidx]);
             exit(1);
         }
         
@@ -63,7 +64,7 @@ static void *comm_thread_func(void *arnd){
             switch (nd->hdlq[qidx].type) {
             case PPS_WRITE:
 #if DEBUG
-                fprintf(stdout, "PPS_WRITE: hd %lu tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
+                fprintf(stdout, "PPS_WRITE: hd %" PRIu64 " tp %d \n",nd->hqhead, nd->hdlq[qidx].type);
                 fflush(stdout);
 #endif
                 rc = (uint64_t)write(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size);
@@ -73,13 +74,13 @@ static void *comm_thread_func(void *arnd){
                 nd->hqhead++;
                 nd->hdlq[qidx].status = PPS_COMP;
 #if DEBUG
-                fprintf(stdout, "PPS_WRITE: hd %lu mc %lu rc %lu\n",nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fprintf(stdout, "PPS_WRITE: hd %" PRIu64 " mc %" PRIu64 " rc %" PRIu64 "\n",nd->hqhead, nd->hdlq[qidx].msize, rc);
                 fflush(stdout);
 #endif
                 break;
             case PPS_READ:
 #if DEBUG
-                fprintf(stdout, "PPS_READ: hd %lu tp %d\n", nd->hqhead,  nd->hdlq[qidx].type);
+                fprintf(stdout, "PPS_READ: hd %" PRIu64 " tp %d\n", nd->hqhead,  nd->hdlq[qidx].type);
                 fflush(stdout);
 #endif
                 rc = (uint64_t)recv(nd->sock, nd->hdlq[qidx].addr, nd->hdlq[qidx].size, MSG_WAITALL);
@@ -92,7 +93,7 @@ static void *comm_thread_func(void *arnd){
                 nd->hqhead++;
                 nd->hdlq[qidx].status = PPS_COMP;
 #if DEBUG
-                fprintf(stdout, "PPS_READ: hd %lu mc %lu rc %lu\n", nd->hqhead, nd->hdlq[qidx].msize, rc);
+                fprintf(stdout, "PPS_READ: hd %" PRIu64 " mc %" PRIu64 " rc %" PRIu64 "\n", nd->hqhead, nd->hdlq[qidx].msize, rc);
                 fflush(stdout);
 #endif
                 break;
@@ -113,12 +114,12 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr,
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
-    memset(hdl, 0, sizeof(hdl));
+    memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
 
 #if DEBUG
-    fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
+    fprintf(stdout, "qidx %" PRIu64 " size %zu  hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
     /* access handle queue */
@@ -144,12 +145,12 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
-    memset(hdl, 0, sizeof(hdl));
+    memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
 
 #if DEBUG
-    fprintf(stdout, "qidx %lu size %lu hdlq %p\n", qidx ,size, nd->hdlq);
+    fprintf(stdout, "qidx %" PRIu64 " size %zu hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
     /* access handle queue */

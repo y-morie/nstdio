@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #define PPSTREAM_TCP    1
 #define PPSTREAM_UDP    2

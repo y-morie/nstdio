@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         printf("sv: finish nquery\n"); 
     }
     
-    printf("sv: data 0:%lf %d:%lf\n", str[0], DCOUNT-1, str[DCOUNT-1]);
+    printf("sv: data 0:%lf %" PRIu64 ":%lf\n", str[0], DCOUNT-1, str[DCOUNT-1]);
     printf("sv: start nclose \n");
     nclose(nd);
     printf("sv: finish nclose \n");

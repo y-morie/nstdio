@@ -44,8 +44,8 @@ int main(int argc, char **argv) {
     }
     else {
         fprintf(stderr, "Command error　\n");
-        fprintf(stderr, "cl: %d　[hostname/IP address] port\n", argv[0]);
-        fprintf(stderr, "sv: %d　port \n", argv[0]);
+        fprintf(stderr, "cl: %s　[hostname/IP address] port\n", argv[0]);
+        fprintf(stderr, "sv: %s　port \n", argv[0]);
         exit(1);
     }
     

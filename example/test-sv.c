@@ -30,7 +30,7 @@ int main(int argc, char **argv){
     printf("sv: start nquery \n");
     while(nquery(hdl));
     printf("sv: finish nquery \n");
-    printf("sv: msize %lu\n", hdl->msize);
+    printf("sv: msize %" PRIu64 "\n", hdl->msize);
     printf("sv: get data  [%s]\n", str);
     
     printf("sv: start nclose \n");
