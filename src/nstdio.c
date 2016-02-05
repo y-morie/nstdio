@@ -20,7 +20,11 @@ void nsync(ND *nd){
 NHDL *nwrite( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
-    
+
+    if (nd->mode == PPSTREAM_MODE_RO){
+        fprintf(stderr, "ND is read only mode");
+        return NULL;
+    }
     hdl = (NHDL * )ppstream_input(nd, addr, size);
     
     return hdl;
@@ -29,7 +33,11 @@ NHDL *nwrite( ND *nd, void *addr, size_t size){
 NHDL *nread( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
-    
+
+    if (nd->mode == PPSTREAM_MODE_WO){
+        fprintf(stderr, "ND is write only mode");
+        return NULL;
+    }
     hdl = ppstream_output(nd, addr, size);
     
     return hdl;
@@ -53,11 +61,21 @@ ND *nopen(NET *nt, char *mode){
     int errno;
     
     
-    if(strcmp(mode, "w") == 0){
+    if (strcmp(mode, "w") == 0) {
         nt->scflag = PPSTREAM_CLIENT;
+	nt->mode = PPSTREAM_MODE_WO;
     }
-    else if(strcmp(mode, "r") == 0){
+    else if (strcmp(mode, "c") == 0) {
+      nt->scflag = PPSTREAM_CLIENT;
+      nt->mode = PPSTREAM_MODE_WR;
+    }
+    else if(strcmp(mode, "r") == 0) {
         nt->scflag = PPSTREAM_SERVER;
+	nt->mode = PPSTREAM_MODE_RO;
+    }
+    else if(strcmp(mode, "s") == 0) {
+        nt->scflag = PPSTREAM_SERVER;
+	nt->mode = PPSTREAM_MODE_WR;
     }
     else{
         fprintf(stderr, "error: mode of nopen.");

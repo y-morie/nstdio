@@ -20,7 +20,7 @@ int main(int argc, char **argv){
     str = (char *)malloc(sizeof(char) * 256);
     
     printf("sv: start nopen \n");
-    nd = nopen(nt, "r");
+    nd = nopen(nt, "s");
     printf("sv: finish nopen \n");
     //nsync(nd);
     printf("sv: start nread \n");

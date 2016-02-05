@@ -21,7 +21,7 @@ int main(int argc, char **argv){
     printf("cl: send chars [%s]\n", argv[3]);
     
     printf("cl: start nopen \n");
-    nd = nopen(nt, "w");
+    nd = nopen(nt, "c");
     printf("cl: finish nopen \n");
     //nsync(nd);
     printf("cl: start nread \n");

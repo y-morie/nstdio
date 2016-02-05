@@ -12,11 +12,16 @@
 #define PPSTREAM_SERVER 1
 #define PPSTREAM_CLIENT 2
 
+#define PPSTREAM_MODE_WR 0
+#define PPSTREAM_MODE_WO 1
+#define PPSTREAM_MODE_RO 2
+
 typedef struct ppstream_networkinfo {
     char *ip_addr;
     char *port;
     uint32_t Dflag;
     uint32_t scflag;
+    uint32_t mode;
 } ppstream_networkinfo_t;
 
 typedef struct ppstearm_handlequeue {
@@ -32,6 +37,7 @@ typedef struct ppstream_networkdescriptor{
     char *ip;
     char *port;
     uint32_t scflag;
+    uint32_t mode;
     uint32_t Dflag;
     pthread_t comm_thread_id;
     pthread_mutex_t mutex;
