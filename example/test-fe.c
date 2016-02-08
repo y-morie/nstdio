@@ -20,14 +20,15 @@ int main(int argc, char **argv){
     nt1 = setnet(NULL, argv[1], NTCP);
     nt2 = setnet(NULL, argv[2], NTCP);
     str = (char *)malloc(sizeof(char) * 256);
-    
-    printf("fe: start nopen nt1.\n");
-    nd1 = nopen(nt1, "s");
-    printf("fe: finish nopen nt1.\n");
+
     printf("fe: start nopen nt2.\n");
     nd2 = nopen(nt2, "s");
     printf("fe: finish nopen nt2.\n");
     //nsync(nd);
+
+    printf("fe: start nopen nt1.\n");
+    nd1 = nopen(nt1, "s");
+    printf("fe: finish nopen nt1.\n");
     
     printf("fe: start nread nd1.\n");
     hdl = nread(nd1, str, 256);
