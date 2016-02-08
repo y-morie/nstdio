@@ -4,13 +4,22 @@
 
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src/include
 LDADD = $(top_builddir)/src/libnstdio.la $(top_builddir)/src/libppstream.la
-noinst_PROGRAMS = sv cl test-ping test-pingd test-pingc
+noinst_PROGRAMS = sv cl pc fe node test-ping test-pingd test-pingc
 
 sv_DEPENDENCIES = $(LDADD)
 sv_SOURCES = test-sv.c nstdio.h ppstream.h
 
 cl_DEPENDENCIES = $(LDADD)
 cl_SOURCES = test-cl.c nstdio.h ppstream.h
+
+pc_DEPENDENCIES = $(LDADD)
+pc_SOURCES = test-pc.c nstdio.h ppstream.h
+
+fe_DEPENDENCIES = $(LDADD)
+fe_SOURCES = test-fe.c nstdio.h ppstream.h
+
+node_DEPENDENCIES = $(LDADD)
+node_SOURCES = test-node.c nstdio.h ppstream.h
 
 test_ping_DEPENDENCIES = $(LDADD)
 test_ping_SOURCES = test-ping.c nstdio.h ppstream.h

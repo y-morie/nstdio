@@ -12,32 +12,34 @@ int main(int argc, char **argv){
     /* chars data  */
     char *str;
     
-    if (argc != 4) {
+    if (argc != 3) {
         fprintf(stderr, "command error \n");
         fprintf(stderr, "%s [hostname/IP address] port [send chars]\n", argv[0]);
         exit(1);
     }
     nt = setnet(argv[1], argv[2], NTCP);
-    printf("cl: send chars [%s]\n", argv[3]);
+    str = (char *)malloc(sizeof(char) * 256);
     
-    printf("cl: start nopen \n");
+    printf("pc: start nopen nt1.\n");
     nd = nopen(nt, "c");
-    printf("cl: finish nopen \n");
+    printf("pc: finish nopen nt1.\n");
+    
     //nsync(nd);
-    printf("cl: start nread \n");
-    hdl = nwrite(nd, argv[3], 256);
-    printf("cl: finish nwrite \n");
-    
-    printf("cl: start nquery \n");
+    printf("pc: start nread.\n");
+    hdl = nread(nd, str, 256);
+    printf("pc: finish nread.\n");
+    printf("pc: start nquery nd2 handle.\n");
     while (nquery(hdl));
-    printf("cl: finish nquery \n");
+    printf("pc: finish nquery nd2 handle.\n");
     
-    printf("cl: start nclose \n");
+    fprintf(stdout, "pc: %s\n", str); 
+    
+    printf("pc: start nclose \n");
     nclose(nd);
-    printf("cl: finish nclose \n");
+    printf("pc: finish nclose \n");
     
     freenet(nt);
-    printf("cl: finish\n");
+    printf("pc: finish\n");
     
     return 0;
 }

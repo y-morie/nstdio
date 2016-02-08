@@ -18,26 +18,26 @@ int main(int argc, char **argv){
         exit(1);
     }
     nt = setnet(argv[1], argv[2], NTCP);
-    printf("cl: send chars [%s]\n", argv[3]);
+    printf("node: send chars [%s]\n", argv[3]);
     
-    printf("cl: start nopen \n");
+    printf("node: start nopen \n");
     nd = nopen(nt, "c");
-    printf("cl: finish nopen \n");
+    printf("node: finish nopen \n");
     //nsync(nd);
-    printf("cl: start nread \n");
+    printf("node: start nwrite \n");
     hdl = nwrite(nd, argv[3], 256);
-    printf("cl: finish nwrite \n");
+    printf("node: finish nwrite \n");
     
-    printf("cl: start nquery \n");
+    printf("node: start nquery \n");
     while (nquery(hdl));
-    printf("cl: finish nquery \n");
+    printf("node: finish nquery \n");
     
-    printf("cl: start nclose \n");
+    printf("node: start nclose \n");
     nclose(nd);
-    printf("cl: finish nclose \n");
+    printf("node: finish nclose \n");
     
     freenet(nt);
-    printf("cl: finish\n");
+    printf("node: finish\n");
     
     return 0;
 }
