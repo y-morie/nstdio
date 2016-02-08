@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     
     if (argc != 3) {
         fprintf(stderr, "command error \n");
-        fprintf(stderr, "%s [servername/IP address] port \n", argv[0]);
+        fprintf(stderr, "%s servername port \n", argv[0]);
         exit(1);
     }
     

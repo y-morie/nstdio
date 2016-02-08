@@ -14,7 +14,7 @@ int main(int argc, char **argv){
     
     if (argc != 4) {
         fprintf(stderr, "command error \n");
-        fprintf(stderr, "%s [hostname/IP address] port_node [send chars]\n", argv[0]);
+        fprintf(stderr, "%s hostname port_node send_chars \n", argv[0]);
         exit(1);
     }
     nt = setnet(argv[1], argv[2], NTCP);

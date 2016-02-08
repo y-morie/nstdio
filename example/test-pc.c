@@ -14,7 +14,7 @@ int main(int argc, char **argv){
     
     if (argc != 3) {
         fprintf(stderr, "command error \n");
-        fprintf(stderr, "%s port\n", argv[0]);
+        fprintf(stderr, "%s port_pc\n", argv[0]);
         exit(1);
     }
     nt = setnet(argv[1], argv[2], NTCP);
@@ -32,7 +32,7 @@ int main(int argc, char **argv){
     while (nquery(hdl));
     printf("pc: finish nquery nd2 handle.\n");
     
-    fprintf(stdout, "pc: %s\n", str); 
+    fprintf(stdout, "pc: recv chars [%s]\n", str); 
     
     printf("pc: start nclose \n");
     nclose(nd);
