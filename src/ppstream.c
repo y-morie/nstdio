@@ -108,12 +108,15 @@ static void *comm_thread_func(void *arnd){
     }
 }
 
-ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr, size_t size){
+ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, size_t size){
     
     ppstream_handle_t *hdl;
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
+    if (NULL == hdl) {
+        return NULL;
+    }
     memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
@@ -124,7 +127,7 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr,
 #endif
     /* access handle queue */
     pthread_mutex_lock(&(nd->mutex));
-    nd->hdlq[qidx].addr = addr;
+    nd->hdlq[qidx].addr = ptr;
     nd->hdlq[qidx].size = size;   
     nd->hdlq[qidx].type = PPS_WRITE;
     nd->hdlq[qidx].status = PPS_START;
@@ -139,12 +142,15 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *addr,
     return hdl;
 }
 
-ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr, size_t size){
+ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr, size_t size){
     
     ppstream_handle_t *hdl;
     uint64_t id, qidx;
     
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
+    if (NULL == hdl) {
+        return NULL;
+    }
     memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->hqtail;
     qidx = id % MAX_HANDLE_QSIZE;
@@ -155,7 +161,7 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
 #endif
     /* access handle queue */
     pthread_mutex_lock(&(nd->mutex));
-    nd->hdlq[qidx].addr = addr;
+    nd->hdlq[qidx].addr = ptr;
     nd->hdlq[qidx].size = size;
     nd->hdlq[qidx].type = PPS_READ;
     nd->hdlq[qidx].status = PPS_START;
@@ -171,7 +177,10 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *addr
 }
 
 int ppstream_test(ppstream_handle_t *hdl){
-    
+    /*
+    fprintf(stderr, "%d\n", hdl->nd->mutex);
+    exit(1);
+    */
     pthread_mutex_lock(&(hdl->nd->mutex));
     if (hdl->id < hdl->nd->hqhead) {
         hdl->msize =  hdl->nd->hdlq[hdl->id].msize ;
@@ -331,6 +340,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     }
     
 connect_success:
+    
     freeaddrinfo(res);
     
     rc = pthread_cond_init(&(nd->cond), NULL);
@@ -363,13 +373,15 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
     return ;
 }
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, char *port, uint32_t scflag, uint32_t Dflag){
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t Dflag){
     ppstream_networkinfo_t *nt;
     
     nt = (ppstream_networkinfo_t *)malloc(sizeof(ppstream_networkinfo_t));
-
-    nt->ip_addr = ip_addr;
-    nt->port = port;
+    if (NULL == nt) {
+        return NULL;
+    }
+    nt->ip_addr = hostname;
+    nt->port = servname;
     nt->Dflag = Dflag;
     nt->scflag = scflag;
     

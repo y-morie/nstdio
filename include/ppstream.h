@@ -1,6 +1,10 @@
 #ifndef __INCLUDE_PPSTREAM_H__
 #define __INCLUDE_PPSTREAM_H__
 
+/**
+ * @file ppstream.h
+ */
+
 #include <stdint.h>
 #include <pthread.h>
 #include <inttypes.h>
@@ -16,6 +20,7 @@
 #define PPSTREAM_MODE_WR 0
 #define PPSTREAM_MODE_WO 1
 #define PPSTREAM_MODE_RO 2
+
 
 typedef struct ppstream_networkinfo {
     char *ip_addr;
@@ -62,13 +67,13 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt);
 
 void ppstream_close(ppstream_networkdescriptor_t *nd);
 
-ppstream_handle_t *ppstream_input(ppstream_networkdescriptor_t *nd, void *addr, size_t size);
+ppstream_handle_t *ppstream_input(ppstream_networkdescriptor_t *nd, void *ptr, size_t size);
 
-ppstream_handle_t *ppstream_output(ppstream_networkdescriptor_t *nd, void *addr, size_t size);
+ppstream_handle_t *ppstream_output(ppstream_networkdescriptor_t *nd, void *ptr, size_t size);
 
 int ppstream_test(ppstream_handle_t *hdl);
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *ip_addr, char *port, uint32_t scflag, uint32_t Dflag);
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t Dflag);
 
 void ppstream_free_networkinfo(ppstream_networkinfo_t *nt);
 
