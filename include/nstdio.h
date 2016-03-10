@@ -3,6 +3,9 @@
 
 /**
  * @file nstdio.h
+ * @breif a header file for NSTDIO
+ *
+ * This is NSTDIO header file.
 */
 
 #include <ppstream.h>
@@ -18,8 +21,6 @@ typedef ppstream_networkdescriptor_t ND;
 
 typedef ppstream_handle_t NHDL;
 
-void nsync(ND *nd);
-
 /**
  * @JP
  * @brief ネットワークへの接続の開く
@@ -30,10 +31,10 @@ void nsync(ND *nd);
  *
  * @param nt ネットワーク情報構造体
  * @param mode ネットワークのオープン時のモード
- *      - "s": サーバとして接続を待つ。
- *      - "c": クライアントとして接続する。
- *      - "r": サーバとして接続を待つ。接続確立後は読み込み（受信）のみ可能
- *      - "w": クライアントして接続する。接続確立後は書き込み（送信）のみ可能
+ *      - &quot;s&quot;: サーバとして接続を待つ。
+ *      - &quot;c&quot;: クライアントとして接続する。
+ *      - &quot;r&quot;: サーバとして接続を待つ。接続確立後は読み込み（受信）のみ可能
+ *      - &quot;w&quot;: クライアントして接続する。接続確立後は書き込み（送信）のみ可能
  * @retval 成功 ネットワークディスクリプタ 
  * @retval 失敗 NULL
 */
@@ -42,6 +43,7 @@ ND *nopen(NET *nt, char *mode);
 /**
  * @JP
  * @brief ネットワークへの接続を閉じる
+ *
  * nclose関数は、指定したネットワークディスクリプタに対応する接続を閉じる。
  *
  * @param nd オープンされたネットワークディスクリプタ
@@ -52,12 +54,13 @@ void nclose(ND *nd);
 /**
  * @JP
  * @brief 送信処理発行
+ *
  * nwrite関数は、指定したネットワークディスクリプタによる接続に対して
  * 指定送信バッファを元に送信処理を行う。本関数はノンブロッキング動作を行う。
  * 受信処理の完了はnquery関数により知る。本関数を実行後、
- *完了確認を実施前に送信領域を書き換えた場合には、受信先のデータの内容は不定。
+ * 完了確認を実施前に送信領域を書き換えた場合には、受信先のデータの内容は不定。
  *
- * @param nd オープされたネットワーウディスクリプタ
+ * @param nd オープンされたネットワーウディスクリプタ
  * @param ptr 送信バッファの先頭アドレス
  * @param size 送信データサイズ
  *
@@ -75,7 +78,7 @@ NHDL *nwrite(ND *nd, void *ptr, size_t size);
  * 受信処理の完了はnquery関数により知る。本関数を実行後、
  * 完了確認を実施前に受信領域を書き換えた場合には、データ内容は不定。
  *
- * @param nd オープされたネットワーウディスクリプタ
+ * @param nd オープンされたネットワーウディスクリプタ
  * @param ptr 受信バッファの先頭アドレス
  * @param size 受信ータサイズ
  *
@@ -101,6 +104,17 @@ int nquery(NHDL *hdl);
 
 /**
  * @JP
+ * @brief プロセス間の同期を実行
+ *
+ * nsync関数は、指定したネットワークディスクリプタに対応する接続間において同期を実行。
+ *
+ * @param nd オープンされたネットワークディスクリプタ
+ * @retval なし
+*/
+void nsync(ND *nd);
+
+/**
+ * @JP
  * @brief 接続先プロセスのネットワーク情報の生成
  *
  * setnet関数は、指示したホストネーム hostname、
@@ -112,8 +126,8 @@ int nquery(NHDL *hdl);
  * @param Dflag 通信デバイスの指定フラグ
  * - NTCP: TCP/IP による接続
  *
- * @retval ネットワーク情報
- * @retval NULL 
+ * @retval 成功 ネットワーク情報構造体
+ * @retval 失敗 NULL 
 */
 NET *setnet(char *hostname, char *sesrvname, uint32_t Dflag);
 

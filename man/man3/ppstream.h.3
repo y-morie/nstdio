@@ -1,0 +1,112 @@
+.TH "include/ppstream.h" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/ppstream.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdint.h>\fP
+.br
+\fC#include <pthread.h>\fP
+.br
+\fC#include <inttypes.h>\fP
+.br
+
+.SS "データ構造"
+
+.in +1c
+.ti -1c
+.RI "struct \fBppstream_networkinfo\fP"
+.br
+.ti -1c
+.RI "struct \fBppstearm_handlequeue\fP"
+.br
+.ti -1c
+.RI "struct \fBppstream_networkdescriptor\fP"
+.br
+.ti -1c
+.RI "struct \fBppstream_handle\fP"
+.br
+.in -1c
+.SS "マクロ定義"
+
+.in +1c
+.ti -1c
+.RI "#define \fBPPSTREAM_TCP\fP   1"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_UDP\fP   2"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_IBRC\fP   10"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_IBUD\fP   11"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_SERVER\fP   1"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_CLIENT\fP   2"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_MODE_WR\fP   0"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_MODE_WO\fP   1"
+.br
+.ti -1c
+.RI "#define \fBPPSTREAM_MODE_RO\fP   2"
+.br
+.in -1c
+.SS "型定義"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBppstream_networkinfo\fP \fBppstream_networkinfo_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBppstearm_handlequeue\fP \fBppstream_handlequeue_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBppstream_networkdescriptor\fP \fBppstream_networkdescriptor_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBppstream_handle\fP \fBppstream_handle_t\fP"
+.br
+.in -1c
+.SS "関数"
+
+.in +1c
+.ti -1c
+.RI "void \fBppstream_sync\fP (\fBppstream_networkdescriptor_t\fP *nd)"
+.br
+.ti -1c
+.RI "\fBppstream_networkdescriptor_t\fP * \fBppstream_open\fP (\fBppstream_networkinfo_t\fP *nt)"
+.br
+.ti -1c
+.RI "void \fBppstream_close\fP (\fBppstream_networkdescriptor_t\fP *nd)"
+.br
+.ti -1c
+.RI "\fBppstream_handle_t\fP * \fBppstream_input\fP (\fBppstream_networkdescriptor_t\fP *nd, void *ptr, size_t size)"
+.br
+.ti -1c
+.RI "\fBppstream_handle_t\fP * \fBppstream_output\fP (\fBppstream_networkdescriptor_t\fP *nd, void *ptr, size_t size)"
+.br
+.ti -1c
+.RI "int \fBppstream_test\fP (\fBppstream_handle_t\fP *hdl)"
+.br
+.ti -1c
+.RI "\fBppstream_networkinfo_t\fP * \fBppstream_set_networkinfo\fP (char *hostname, char *servname, uint32_t scflag, uint32_t Dflag)"
+.br
+.ti -1c
+.RI "void \fBppstream_free_networkinfo\fP (\fBppstream_networkinfo_t\fP *nt)"
+.br
+.in -1c
+.SH "説明"
+.PP 
+
+.SH "作者"
+.PP 
+NSTDIOのソースから Doxygen により生成しました。

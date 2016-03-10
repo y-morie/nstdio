@@ -1,0 +1,242 @@
+.TH "include/nstdio.h" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+include/nstdio.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <ppstream.h>\fP
+.br
+
+.SS "マクロ定義"
+
+.in +1c
+.ti -1c
+.RI "#define \fBNTCP\fP   PPSTREAM_TCP"
+.br
+.ti -1c
+.RI "#define \fBNUDP\fP   PPSTREAM_UDP"
+.br
+.ti -1c
+.RI "#define \fBNIBRC\fP   PPSTREAM_IBRC"
+.br
+.ti -1c
+.RI "#define \fBNIBUD\fP   PPSTREAM_IBUD"
+.br
+.in -1c
+.SS "型定義"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBppstream_networkinfo_t\fP \fBNET\fP"
+.br
+.ti -1c
+.RI "typedef \fBppstream_networkdescriptor_t\fP \fBND\fP"
+.br
+.ti -1c
+.RI "typedef \fBppstream_handle_t\fP \fBNHDL\fP"
+.br
+.in -1c
+.SS "関数"
+
+.in +1c
+.ti -1c
+.RI "\fBND\fP * \fBnopen\fP (\fBNET\fP *nt, char *mode)"
+.br
+.RI "\fIネットワークへの接続の開く \fP"
+.ti -1c
+.RI "void \fBnclose\fP (\fBND\fP *nd)"
+.br
+.RI "\fIネットワークへの接続を閉じる \fP"
+.ti -1c
+.RI "\fBNHDL\fP * \fBnwrite\fP (\fBND\fP *nd, void *ptr, size_t size)"
+.br
+.RI "\fI送信処理発行 \fP"
+.ti -1c
+.RI "\fBNHDL\fP * \fBnread\fP (\fBND\fP *nd, void *ptr, size_t size)"
+.br
+.RI "\fI受信処理発行 \fP"
+.ti -1c
+.RI "int \fBnquery\fP (\fBNHDL\fP *hdl)"
+.br
+.RI "\fI完了確認 \fP"
+.ti -1c
+.RI "void \fBnsync\fP (\fBND\fP *nd)"
+.br
+.RI "\fIプロセス間の同期を実行 \fP"
+.ti -1c
+.RI "\fBNET\fP * \fBsetnet\fP (char *hostname, char *sesrvname, uint32_t Dflag)"
+.br
+.RI "\fI接続先プロセスのネットワーク情報の生成 \fP"
+.ti -1c
+.RI "void \fBfreenet\fP (\fBNET\fP *nt)"
+.br
+.RI "\fI接続先プロセスのネットワーク情報の解放 \fP"
+.in -1c
+.SH "説明"
+.PP 
+a header file for NSTDIO
+.PP
+This is NSTDIO header file. 
+.SH "関数"
+.PP 
+.SS "void freenet (\fBNET\fP * nt)"
+.PP
+接続先プロセスのネットワーク情報の解放 freenet関数は、指定されたネットワーク情報構造体を解放する。
+.PP
+\fB引数:\fP
+.RS 4
+\fInt\fP ネットワーク情報構造体
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fIなし\fP 
+.RE
+.PP
+
+.SS "void nclose (\fBND\fP * nd)"
+.PP
+ネットワークへの接続を閉じる nclose関数は、指定したネットワークディスクリプタに対応する接続を閉じる。
+.PP
+\fB引数:\fP
+.RS 4
+\fInd\fP オープンされたネットワークディスクリプタ 
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fIなし\fP 
+.RE
+.PP
+
+.SS "\fBND\fP* nopen (\fBNET\fP * nt, char * mode)"
+.PP
+ネットワークへの接続の開く nopen関数は、ネットワーク情報 nt で指定されたプロセスに対して接続を行い、 対応するネットワークとストリームを結びつける。
+.PP
+\fB引数:\fP
+.RS 4
+\fInt\fP ネットワーク情報構造体 
+.br
+\fImode\fP ネットワークのオープン時のモード
+.IP "\(bu" 2
+"s": サーバとして接続を待つ。
+.IP "\(bu" 2
+"c": クライアントとして接続する。
+.IP "\(bu" 2
+"r": サーバとして接続を待つ。接続確立後は読み込み（受信）のみ可能
+.IP "\(bu" 2
+"w": クライアントして接続する。接続確立後は書き込み（送信）のみ可能 
+.PP
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fI成功\fP ネットワークディスクリプタ 
+.br
+\fI失敗\fP NULL 
+.RE
+.PP
+
+.SS "int nquery (\fBNHDL\fP * hdl)"
+.PP
+完了確認 nquery関数は、指定した通信ハンドルに対する送信および 受信の処理の完了確認を実施する。 nwrite, nreadで指定されたsizeの送信、受信の完了を待つ。
+.PP
+\fB引数:\fP
+.RS 4
+\fIhdl\fP 通信ハンドル
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fI通信完了\fP 0 
+.br
+\fI通信未完了\fP 1 
+.RE
+.PP
+
+.SS "\fBNHDL\fP* nread (\fBND\fP * nd, void * ptr, size_t size)"
+.PP
+受信処理発行 nread関数は、指定したネットワークディスクリプタによる接続に対して 指定受信バッファへのデータの受信を行う。本関数はノンブロッキング動作を行う。 受信処理の完了はnquery関数により知る。本関数を実行後、 完了確認を実施前に受信領域を書き換えた場合には、データ内容は不定。
+.PP
+\fB引数:\fP
+.RS 4
+\fInd\fP オープンされたネットワーウディスクリプタ 
+.br
+\fIptr\fP 受信バッファの先頭アドレス 
+.br
+\fIsize\fP 受信ータサイズ
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fI成功\fP 通信ハンドル 
+.br
+\fI失敗\fP NULL 
+.RE
+.PP
+
+.SS "void nsync (\fBND\fP * nd)"
+.PP
+プロセス間の同期を実行 nsync関数は、指定したネットワークディスクリプタに対応する接続間において同期を実行。
+.PP
+\fB引数:\fP
+.RS 4
+\fInd\fP オープンされたネットワークディスクリプタ 
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fIなし\fP 
+.RE
+.PP
+
+.SS "\fBNHDL\fP* nwrite (\fBND\fP * nd, void * ptr, size_t size)"
+.PP
+送信処理発行 nwrite関数は、指定したネットワークディスクリプタによる接続に対して 指定送信バッファを元に送信処理を行う。本関数はノンブロッキング動作を行う。 受信処理の完了はnquery関数により知る。本関数を実行後、 完了確認を実施前に送信領域を書き換えた場合には、受信先のデータの内容は不定。
+.PP
+\fB引数:\fP
+.RS 4
+\fInd\fP オープンされたネットワーウディスクリプタ 
+.br
+\fIptr\fP 送信バッファの先頭アドレス 
+.br
+\fIsize\fP 送信データサイズ
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fI成功\fP 通信ハンドル 
+.br
+\fI失敗\fP NULL 
+.RE
+.PP
+
+.SS "\fBNET\fP* setnet (char * hostname, char * sesrvname, uint32_t Dflag)"
+.PP
+接続先プロセスのネットワーク情報の生成 setnet関数は、指示したホストネーム hostname、 ポート番号 servname、通信デバイスの 指定フラグ Dflagをもとにネットワーク情報を生成し、その構造体を返す。
+.PP
+\fB引数:\fP
+.RS 4
+\fIhostname\fP ホストネームもしくはIPアドレス 
+.br
+\fIservname\fP ポート番号 
+.br
+\fIDflag\fP 通信デバイスの指定フラグ
+.IP "\(bu" 2
+NTCP: TCP/IP による接続
+.PP
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fI成功\fP ネットワーク情報構造体 
+.br
+\fI失敗\fP NULL 
+.RE
+.PP
+
+.SH "作者"
+.PP 
+NSTDIOのソースから Doxygen により生成しました。
