@@ -24,7 +24,7 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
     dammy = 'x';
 
 #if DEBUG
-    fprintf(stdout, "nd->sock = %d\n", nd->sock);
+    fprintf(stdout, "ppstream_sync: nd->sock = %d\n", nd->sock);
     fflush(stdout);
 #endif
     
@@ -122,7 +122,7 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     qidx = id % MAX_HANDLE_QSIZE;
 
 #if DEBUG
-    fprintf(stdout, "qidx %" PRIu64 " size %zu  hdlq %p\n", qidx ,size, nd->hdlq);
+    fprintf(stdout, "ppsteram_input: qidx %" PRIu64 " size %zu  hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
     /* access handle queue */
@@ -156,7 +156,7 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr,
     qidx = id % MAX_HANDLE_QSIZE;
 
 #if DEBUG
-    fprintf(stdout, "qidx %" PRIu64 " size %zu hdlq %p\n", qidx ,size, nd->hdlq);
+    fprintf(stdout, "ppstream_output: qidx %" PRIu64 " size %zu hdlq %p\n", qidx ,size, nd->hdlq);
     fflush(stdout);
 #endif
     /* access handle queue */
@@ -215,7 +215,12 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     int rc = 0;
     int errno;
-    
+
+#ifdef DEBUG    
+    fprintf(stdout, "ppstream_open: address %s port %s\n", nt->ip_addr, nt->port);
+    fflush(stdout);
+#endif 
+
     /* malloc networkdescriptor */
     nd = (ppstream_networkdescriptor_t *)malloc(sizeof(ppstream_networkdescriptor_t));
     
@@ -245,7 +250,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     memset((char *)nd->hdlq, 0, sizeof(ppstream_handlequeue_t) * MAX_HANDLE_QSIZE);
     
 #if DEBUG
-    fprintf(stdout, "server or client flagcheck section\n");
+    fprintf(stdout, "ppstream_open: server or client flagcheck section\n");
     fflush(stdout);
 #endif
     
@@ -380,11 +385,28 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     if (NULL == nt) {
         return NULL;
     }
-    nt->ip_addr = hostname;
-    nt->port = servname;
+#ifdef DEBUG
+    fprintf(stdout, "ppstream_set_networkinfo: start hostname %s servname %s nt->ip_addr %s np->port %s\n", hostname, servname, nt->ip_addr, nt->port);
+#endif
+    if ( hostname != NULL ) {
+        nt->ip_addr = strdup(hostname);
+    }
+    else {
+        nt->ip_addr = NULL;
+    }
+    if ( servname != NULL ) {
+        nt->port = strdup(servname);
+    }
+    else {
+        nt->port = NULL;
+    }
     nt->Dflag = Dflag;
     nt->scflag = scflag;
-    
+#ifdef DEBUG
+    fprintf(stdout, "ppsteram_set_networkinfo: fin hostname %s servname %s nt->ip_addr %s np->port %s\n", hostname, servname, nt->ip_addr, nt->port);
+    fflush(stdout);
+#endif 
+  
     return nt;
 }
 
