@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
             printf("cl: start nquery\n"); 
             while (1 == nquery(hdl));
             printf("cl: finish nquery\n"); 
+            nsync(nd);
         }        
         else if (scflag == SERVER) {
             printf("sv: start nread\n");
@@ -68,6 +69,7 @@ int main(int argc, char **argv) {
             while (1 == nquery(hdl));
             printf("sv: finish nquery\n"); 
             printf("sv: data [%s] recv\n", str);
+            nsync(nd);
         }
     }
     

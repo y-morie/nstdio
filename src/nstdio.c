@@ -21,7 +21,7 @@ NHDL *nwrite( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
 
-    if (nd->mode == PPSTREAM_MODE_RO){
+    if (nd->pp_mode == PPSTREAM_MODE_RO) {
         fprintf(stderr, "ND is read only mode");
         return NULL;
     }
@@ -33,8 +33,8 @@ NHDL *nwrite( ND *nd, void *addr, size_t size){
 NHDL *nread( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
-
-    if (nd->mode == PPSTREAM_MODE_WO){
+    
+    if (nd->pp_mode == PPSTREAM_MODE_WO){
         fprintf(stderr, "ND is write only mode");
         return NULL;
     }
@@ -60,24 +60,23 @@ ND *nopen(NET *nt, char *mode){
     int rc = 0;
     int errno;
     
-    
     if (strcmp(mode, "w") == 0) {
-        nt->scflag = PPSTREAM_CLIENT;
-	nt->mode = PPSTREAM_MODE_WO;
+        nt->pp_scflag = PPSTREAM_CLIENT;
+	nt->pp_mode = PPSTREAM_MODE_WO;
     }
     else if (strcmp(mode, "c") == 0) {
-      nt->scflag = PPSTREAM_CLIENT;
-      nt->mode = PPSTREAM_MODE_WR;
+      nt->pp_scflag = PPSTREAM_CLIENT;
+      nt->pp_mode = PPSTREAM_MODE_WR;
     }
-    else if(strcmp(mode, "r") == 0) {
-        nt->scflag = PPSTREAM_SERVER;
-	nt->mode = PPSTREAM_MODE_RO;
+    else if (strcmp(mode, "r") == 0) {
+        nt->pp_scflag = PPSTREAM_SERVER;
+	nt->pp_mode = PPSTREAM_MODE_RO;
     }
-    else if(strcmp(mode, "s") == 0) {
-        nt->scflag = PPSTREAM_SERVER;
-	nt->mode = PPSTREAM_MODE_WR;
+    else if (strcmp(mode, "s") == 0) {
+        nt->pp_scflag = PPSTREAM_SERVER;
+	nt->pp_mode = PPSTREAM_MODE_WR;
     }
-    else{
+    else {
         fprintf(stderr, "error: mode of nopen.");
     }
     nd = ppstream_open(nt);
@@ -85,14 +84,14 @@ ND *nopen(NET *nt, char *mode){
     return (ND *)nd;
 }
 
-void nclose(ND *nd){
+void nclose(ND *nd) {
     
     ppstream_close(nd);
 
     return ;
 }
 
-NET *setnet(char *ipaddr, char* port, uint32_t Dflag){
+NET *setnet(char *ipaddr, char* port, uint32_t Dflag) {
 
     NET *nt;
 
@@ -101,7 +100,7 @@ NET *setnet(char *ipaddr, char* port, uint32_t Dflag){
     return nt;
 }
 
-void freenet(NET *nt){
+void freenet(NET *nt) {
     
     ppstream_free_networkinfo(nt);
     

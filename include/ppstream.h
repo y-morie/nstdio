@@ -21,44 +21,63 @@
 #define PPSTREAM_MODE_WO 1
 #define PPSTREAM_MODE_RO 2
 
-
 typedef struct ppstream_networkinfo {
-    char *ip_addr;
-    char *port;
-    uint32_t Dflag;
-    uint32_t scflag;
-    uint32_t mode;
+    char *pp_ipaddr;
+    char *pp_port;
+    uint32_t pp_devflag;
+    uint32_t pp_scflag;
+    uint32_t pp_mode;
+    size_t pp_set_segment;
+    double pp_set_timeout;
+    double pp_set_cntimeout;
+    int pp_set_nretry;
 } ppstream_networkinfo_t;
 
 typedef struct ppstearm_handlequeue {
-    uint64_t id;
-    void *addr;
-    int type;
-    size_t size;
-    int status;
-    uint64_t msize;
+    uint64_t pp_id;
+    void *pp_addr;
+    size_t pp_size;
+    size_t pp_compsize;
+    int pp_type;
+    int pp_status;
+    double pp_stime;
+    double pp_etime;
 } ppstream_handlequeue_t;
 
 typedef struct ppstream_networkdescriptor{
-    char *ip;
-    char *port;
-    uint32_t scflag;
-    uint32_t mode;
-    uint32_t Dflag;
-    pthread_t comm_thread_id;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-    int finflag;
-    int sock;
-    uint64_t hqhead;
-    uint64_t hqtail;
-    ppstream_handlequeue_t *hdlq;
+    char *pp_ipaddr;
+    char *pp_port;
+    uint32_t pp_scflag;
+    uint32_t pp_mode;
+    uint32_t pp_devflag;
+    pthread_t pp_comm_thread_id;
+    pthread_mutex_t pp_mutex;
+    pthread_cond_t pp_cond;
+    int pp_finflag;
+    int pp_connect_status;
+    int pp_sock;
+    int pp_socks;
+    uint64_t pp_shqhead;
+    uint64_t pp_shqtail;
+    uint64_t pp_rhqhead;
+    uint64_t pp_rhqtail;
+    ppstream_handlequeue_t *shdlq;
+    ppstream_handlequeue_t *rhdlq;
+    struct addrinfo *pp_ai;
+    size_t pp_set_segment;
+    double pp_set_timeout;
+    double pp_set_cntimeout;
+    double pp_chtimeout_stime;
+    double pp_chtimeout_etime;
+    int pp_set_nretry;
+    int cerrcode;
 } ppstream_networkdescriptor_t;
 
 typedef struct ppstream_handle {
-    uint64_t id;
-    uint64_t msize;
+    uint64_t pp_id;
+    uint64_t pp_msize;
     ppstream_networkdescriptor_t *nd;
+    int pp_hdltype;
 } ppstream_handle_t;
 
 void ppstream_sync(ppstream_networkdescriptor_t *nd);
@@ -73,7 +92,7 @@ ppstream_handle_t *ppstream_output(ppstream_networkdescriptor_t *nd, void *ptr, 
 
 int ppstream_test(ppstream_handle_t *hdl);
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t Dflag);
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t devflag);
 
 void ppstream_free_networkinfo(ppstream_networkinfo_t *nt);
 
