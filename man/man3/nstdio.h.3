@@ -1,4 +1,4 @@
-.TH "include/nstdio.h" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.TH "include/nstdio.h" 3 "3 Oct 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -73,6 +73,10 @@ include/nstdio.h \-
 .RI "void \fBfreenet\fP (\fBNET\fP *nt)"
 .br
 .RI "\fI接続先プロセスのネットワーク情報の解放 \fP"
+.ti -1c
+.RI "void \fBsettimeout\fP (\fBND\fP *nd, double timeout)"
+.br
+.RI "\fIネットワークのタイムアウト時間を設定する。 \fP"
 .in -1c
 .SH "説明"
 .PP 
@@ -234,6 +238,23 @@ NTCP: TCP/IP による接続
 \fI成功\fP ネットワーク情報構造体 
 .br
 \fI失敗\fP NULL 
+.RE
+.PP
+
+.SS "void settimeout (\fBND\fP * nd, double timeout)"
+.PP
+ネットワークのタイムアウト時間を設定する。 settimeout関数は、 ネットワークディスクリプタとタイムアウト時間を指定し、 コネクションのタイムアウト時間を設定する
+.PP
+\fB引数:\fP
+.RS 4
+\fInd\fP オープンされたネットワークディスクリプタ 
+.br
+\fItimeout\fP 指定するタイムアウト時間(秒)
+.RE
+.PP
+\fB戻り値:\fP
+.RS 4
+\fIなし\fP 
 .RE
 .PP
 

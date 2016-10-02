@@ -1,4 +1,4 @@
-.TH "include/ppstream.h" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.TH "include/ppstream.h" 3 "3 Oct 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -98,10 +98,13 @@ include/ppstream.h \-
 .RI "int \fBppstream_test\fP (\fBppstream_handle_t\fP *hdl)"
 .br
 .ti -1c
-.RI "\fBppstream_networkinfo_t\fP * \fBppstream_set_networkinfo\fP (char *hostname, char *servname, uint32_t scflag, uint32_t Dflag)"
+.RI "\fBppstream_networkinfo_t\fP * \fBppstream_set_networkinfo\fP (char *hostname, char *servname, uint32_t scflag, uint32_t devflag)"
 .br
 .ti -1c
 .RI "void \fBppstream_free_networkinfo\fP (\fBppstream_networkinfo_t\fP *nt)"
+.br
+.ti -1c
+.RI "void \fBppstream_set_cntimeout\fP (\fBppstream_networkdescriptor_t\fP *nd, double timeout)"
 .br
 .in -1c
 .SH "説明"

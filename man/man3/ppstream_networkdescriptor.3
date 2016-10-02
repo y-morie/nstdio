@@ -1,4 +1,4 @@
-.TH "ppstream_networkdescriptor" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.TH "ppstream_networkdescriptor" 3 "3 Oct 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,43 +10,82 @@ ppstream_networkdescriptor \-
 
 .in +1c
 .ti -1c
-.RI "char * \fBip\fP"
+.RI "char * \fBpp_ipaddr\fP"
 .br
 .ti -1c
-.RI "char * \fBport\fP"
+.RI "char * \fBpp_port\fP"
 .br
 .ti -1c
-.RI "uint32_t \fBscflag\fP"
+.RI "uint32_t \fBpp_scflag\fP"
 .br
 .ti -1c
-.RI "uint32_t \fBmode\fP"
+.RI "uint32_t \fBpp_mode\fP"
 .br
 .ti -1c
-.RI "uint32_t \fBDflag\fP"
+.RI "uint32_t \fBpp_devflag\fP"
 .br
 .ti -1c
-.RI "pthread_t \fBcomm_thread_id\fP"
+.RI "pthread_t \fBpp_comm_thread_id\fP"
 .br
 .ti -1c
-.RI "pthread_mutex_t \fBmutex\fP"
+.RI "pthread_mutex_t \fBpp_mutex\fP"
 .br
 .ti -1c
-.RI "pthread_cond_t \fBcond\fP"
+.RI "pthread_cond_t \fBpp_cond\fP"
 .br
 .ti -1c
-.RI "int \fBfinflag\fP"
+.RI "int \fBpp_finflag\fP"
 .br
 .ti -1c
-.RI "int \fBsock\fP"
+.RI "int \fBpp_connect_status\fP"
 .br
 .ti -1c
-.RI "uint64_t \fBhqhead\fP"
+.RI "int \fBpp_sock\fP"
 .br
 .ti -1c
-.RI "uint64_t \fBhqtail\fP"
+.RI "int \fBpp_socks\fP"
 .br
 .ti -1c
-.RI "\fBppstream_handlequeue_t\fP * \fBhdlq\fP"
+.RI "uint64_t \fBpp_shqhead\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBpp_shqtail\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBpp_rhqhead\fP"
+.br
+.ti -1c
+.RI "uint64_t \fBpp_rhqtail\fP"
+.br
+.ti -1c
+.RI "\fBppstream_handlequeue_t\fP * \fBshdlq\fP"
+.br
+.ti -1c
+.RI "\fBppstream_handlequeue_t\fP * \fBrhdlq\fP"
+.br
+.ti -1c
+.RI "struct addrinfo * \fBpp_ai\fP"
+.br
+.ti -1c
+.RI "size_t \fBpp_set_segment\fP"
+.br
+.ti -1c
+.RI "double \fBpp_set_timeout\fP"
+.br
+.ti -1c
+.RI "double \fBpp_set_cntimeout\fP"
+.br
+.ti -1c
+.RI "double \fBpp_chtimeout_stime\fP"
+.br
+.ti -1c
+.RI "double \fBpp_chtimeout_etime\fP"
+.br
+.ti -1c
+.RI "int \fBpp_set_nretry\fP"
+.br
+.ti -1c
+.RI "int \fBcerrcode\fP"
 .br
 .in -1c
 

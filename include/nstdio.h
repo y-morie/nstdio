@@ -143,4 +143,19 @@ NET *setnet(char *hostname, char *sesrvname, uint32_t Dflag);
 */
 void freenet(NET *nt);
 
+/**
+ * @JP
+ * @brief ネットワークのタイムアウト時間を設定する。
+ *
+ * settimeout関数は、
+ * ネットワークディスクリプタとタイムアウト時間を指定し、
+ * コネクションのタイムアウト時間を設定する
+ * 
+ * @param nd オープンされたネットワークディスクリプタ
+ * @param timeout 指定するタイムアウト時間(秒)
+ * 
+ * @retval なし
+ */
+void settimeout(ND *nd, double timeout);
+
 #endif

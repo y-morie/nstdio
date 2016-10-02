@@ -1,4 +1,4 @@
-.TH "ppstearm_handlequeue" 3 "10 Mar 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
+.TH "ppstearm_handlequeue" 3 "3 Oct 2016" "Version 0.9.9" "NSTDIO" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -10,22 +10,28 @@ ppstearm_handlequeue \-
 
 .in +1c
 .ti -1c
-.RI "uint64_t \fBid\fP"
+.RI "uint64_t \fBpp_id\fP"
 .br
 .ti -1c
-.RI "void * \fBaddr\fP"
+.RI "void * \fBpp_addr\fP"
 .br
 .ti -1c
-.RI "int \fBtype\fP"
+.RI "size_t \fBpp_size\fP"
 .br
 .ti -1c
-.RI "size_t \fBsize\fP"
+.RI "size_t \fBpp_compsize\fP"
 .br
 .ti -1c
-.RI "int \fBstatus\fP"
+.RI "int \fBpp_type\fP"
 .br
 .ti -1c
-.RI "uint64_t \fBmsize\fP"
+.RI "int \fBpp_status\fP"
+.br
+.ti -1c
+.RI "double \fBpp_stime\fP"
+.br
+.ti -1c
+.RI "double \fBpp_etime\fP"
 .br
 .in -1c
 

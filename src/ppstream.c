@@ -876,3 +876,19 @@ void ppstream_free_networkinfo(ppstream_networkinfo_t *nt){
     
     return;
 }
+
+void ppstream_set_cntimeout(ppstream_networkdescriptor_t *nd, double timeout) {
+    
+#ifdef DEBUG
+    fprintf( stdout, "ppstream_set_cntimeout: start.\n");
+    fflush( stdout );
+#endif 
+    
+    nd->pp_set_cntimeout = timeout;
+    
+#ifdef DEBUG
+    fprintf( stdout, "ppstream_set_cntimeout: fin.\n");
+    fflush( stdout );
+#endif 
+    return;
+}

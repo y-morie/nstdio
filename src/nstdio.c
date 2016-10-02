@@ -107,4 +107,9 @@ void freenet(NET *nt) {
     return;
 }
 
+void  settimeout(ND *nd, double timeout) {
 
+    ppstream_set_cntimeout(nd, timeout);
+    
+    return;
+}
