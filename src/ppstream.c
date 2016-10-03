@@ -399,6 +399,9 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     fprintf( stdout, "ppstream_input: start.\n" );
     fflush( stdout );
 #endif
+    if ( nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
+        return NULL;
+    }
 
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
     if ( NULL == hdl ) {
@@ -447,6 +450,9 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr,
     fprintf( stdout, "ppstream_output: start.\n" );
     fflush( stdout );
 #endif
+    if ( nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
+        return NULL;
+    }
     
     hdl = (ppstream_handle_t *)malloc( sizeof( ppstream_handle_t ) );
     if ( NULL == hdl ) {
@@ -495,6 +501,11 @@ int ppstream_test( ppstream_handle_t *hdl ){
     
     if ( NULL == hdl ) {
         rc = -1;
+        goto exit;
+    }
+    
+    if ( hdl->nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
+        rc = -2;
         goto exit;
     }
     
