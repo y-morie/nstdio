@@ -350,7 +350,7 @@ static void *comm_thread_func(void *arnd){
 #endif
             
             close(nd->pp_sock);
-            
+
             FD_ZERO(&fds);
             FD_SET(nd->pp_socks, &fds);
             
@@ -593,6 +593,9 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* network descriptor */
     ppstream_networkdescriptor_t *nd;
+
+    /* timeout starttime and endtime */
+    double st, et;
     
     /* return code */
     int rc = 0;
@@ -600,6 +603,10 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     /* error number */
     int errno;
     
+    /* for set timeout in connect */
+    fd_set rfds, fds;
+    struct timeval timeout;
+            
 #ifdef DEBUG    
     fprintf(stdout, "ppstream_open: start.\n");
     fprintf(stdout, "ppstream_open: address %s port %s.\n", nt->pp_ipaddr, nt->pp_port);
@@ -719,9 +726,12 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         rc = getaddrinfo(nd->pp_ipaddr, nd->pp_port, &hints, &res);
-        
         /* set address info form getaddrinfo */
+
+        st = gettimeofday_sec();
         while ( 1 ) {
+            et = gettimeofday_sec();
+            if ( et - st > nd->pp_set_cntimeout ) goto exit;
             for (ai = res; ai; ai = ai->ai_next) {
                 /* generates socket for server and client */
                 if ( ( sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
@@ -729,6 +739,16 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
                     rc = -1;
                     goto exit;
                 }
+                
+                FD_ZERO(&fds);
+                FD_SET(sock, &fds);
+                
+                /* set timeout 1 sec */
+                timeout.tv_sec =  1;
+                timeout.tv_usec = 0;
+                
+                if ( 0 ==  select(sock + 1, NULL, &fds, NULL, &timeout) ) continue;
+                
                 /* connect ai->pp_addr */
                 if ( connect(sock, ai->ai_addr, ai->ai_addrlen) < 0 ) {
                     if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED) {
