@@ -24,8 +24,8 @@ int main(int argc, char **argv){
     nd = nopen(nt, "c");
     printf("cl: finish nopen \n");
     //nsync(nd);
-    printf("cl: start nread \n");
-    hdl = nwrite(nd, argv[3], 256);
+    printf("cl: start nwrite \n");
+    hdl = nwrite(nd, argv[3], 16);
     printf("cl: finish nwrite \n");
     
     printf("cl: start nquery \n");

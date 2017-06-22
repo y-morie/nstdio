@@ -36,7 +36,9 @@ typedef struct ppstream_networkinfo {
 typedef struct ppstearm_handlequeue {
     uint64_t pp_id;
     void *pp_addr;
+    size_t pp_sizeorg;
     size_t pp_size;
+    size_t pp_sendsize;
     size_t pp_compsize;
     int pp_type;
     int pp_status;
@@ -97,4 +99,5 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
 void ppstream_free_networkinfo(ppstream_networkinfo_t *nt);
 
 void ppstream_set_cntimeout(ppstream_networkdescriptor_t *nd, double timeout);
+
 #endif

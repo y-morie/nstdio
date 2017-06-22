@@ -20,9 +20,10 @@
 #define PPSTREAM_OUTPUT 2
 
 /* handle status */
-#define PPSTREAM_COMP  0
-#define PPSTREAM_START 1
-#define PPSTREAM_COMM  2
+#define PPSTREAM_COMP     0
+#define PPSTREAM_START    1
+#define PPSTREAM_COMM     2
+#define PPSTREAM_OVERREAD 3
 
 /* set default environment value */
 #define PPSTREAM_DTIMEOUT   10
@@ -112,75 +113,110 @@ size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hd
     else { 
         segment_size = rdata  % set_segment;
     }
+    
     return segment_size;
 }
 
 void check_comm_status( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hdlq, int flag , int rc) {
     
     int nretry; /* # of fails of sending  */
-
+    
 #ifdef DEBUG
     fprintf(stdout, "check_comm_status: start.\n");
     fflush(stdout);
 #endif
-
+    
     nretry = nd->pp_set_nretry;
-
+    
 #ifdef DEBUG
     fprintf(stdout, "check_comm_status: rc = %d nd->cerrcode %d nretry %d.\n", rc, nd->cerrcode, nretry);
     fflush(stdout);
 #endif
-
-    if ( rc > 0 ) {
-        /* connet is green, reset # of error counts. */
-        nd->pp_chtimeout_stime = gettimeofday_sec();
-        nd->cerrcode = 0;
-        hdlq->pp_compsize += rc;
-        if ( hdlq->pp_compsize == hdlq->pp_size ) {
-            if ( PPSTREAM_WRITE == flag ) {
-                nd->pp_shqhead++;
-            }
-            else if ( PPSTREAM_READ == flag ) {
-                nd->pp_rhqhead++;
-            }
-            hdlq->pp_status = PPSTREAM_COMP;
-        }
-        else {
-            hdlq->pp_status == PPSTREAM_COMM;
-        }
+    
+    /* send/recv header  */
+    if ( rc == sizeof(size_t) && hdlq->pp_status ==  PPSTREAM_START ) {
+	nd->pp_chtimeout_stime = gettimeofday_sec();
+	nd->cerrcode = 0;
+	/* if read */
+	if ( PPSTREAM_READ == flag ) {
+	    /* recvsize > sendsize */
+	    if ( hdlq->pp_size >= hdlq->pp_sendsize) {
+		hdlq->pp_size = hdlq->pp_sendsize;
+	    }
+	}
+    	hdlq->pp_status = PPSTREAM_COMM;
     }
     else {
-        if ( rc == 0 ) {
-            if ( nd->pp_set_segment != 0 ) {
-                /*  dissconnect on network description. */
-                nd->pp_connect_status = PPSTREAM_UNCONNECTED;
+	if ( rc > 0 ) {
+	    /* connet is green, reset # of error counts. */
+	    nd->pp_chtimeout_stime = gettimeofday_sec();
+	    nd->cerrcode = 0;
+	    hdlq->pp_compsize += rc;
+	    if ( PPSTREAM_WRITE == flag ) {
+		if ( hdlq->pp_compsize == hdlq->pp_size ) {
+		    hdlq->pp_status = PPSTREAM_COMP;
+		    nd->pp_shqhead++;
+		}
+		else {
+		    hdlq->pp_status = PPSTREAM_COMM;
+		}
+	    }
+	    else if ( PPSTREAM_READ == flag ) {
+		if (hdlq->pp_size < hdlq->pp_sendsize ) {
+		    if ( hdlq->pp_compsize >= hdlq->pp_size ) {
+			hdlq->pp_status = PPSTREAM_OVERREAD;
+		    }
+		    else {
+			hdlq->pp_status = PPSTREAM_COMM;
+		    }
+		    if ( hdlq->pp_compsize >= hdlq->pp_sendsize ) {
+			hdlq->pp_status = PPSTREAM_COMP;
+			nd->pp_rhqhead++;
+		    }
+		}		
+		else {
+		    if ( hdlq->pp_compsize == hdlq->pp_size ) {
+			hdlq->pp_status = PPSTREAM_COMP;
+			nd->pp_rhqhead++;
+		    }
+		    else {
+			hdlq->pp_status = PPSTREAM_COMM;
+		    }
+		}
+	    }
+	}
+	else {
+	    if ( rc == 0 ) {
+		if ( nd->pp_set_segment != 0 ) {
+		    /*  dissconnect on network description. */
+		    nd->pp_connect_status = PPSTREAM_UNCONNECTED;
 #ifdef DEBUG
-                fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
-                fflush(stdout);
+		    fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
+		    fflush(stdout);
 #endif
-            }
-        }
-        if ( rc < 0  ) {
-            /* Error eccurs except stopping non blocking operation. */
-            if ( errno != EAGAIN && errno != EWOULDBLOCK ) {
-                nd->pp_connect_status = PPSTREAM_UNCONNECTED;
+		}
+	    }
+	    if ( rc < 0  ) {
+		/* Error eccurs except stopping non blocking operation. */
+		if ( errno != EAGAIN && errno != EWOULDBLOCK ) {
+		    nd->pp_connect_status = PPSTREAM_UNCONNECTED;
 #ifdef DEBUG
-                fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
-                fflush(stdout);
+		    fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
+		    fflush(stdout);
 #endif
-            }
-            else {
-                nd->cerrcode++;
-                if ( nd->cerrcode > nretry ) {
-                    nd->pp_connect_status = PPSTREAM_UNCONNECTED;
+		}
+		else {
+		    nd->cerrcode++;
+		    if ( nd->cerrcode > nretry ) {
+			nd->pp_connect_status = PPSTREAM_UNCONNECTED;
 #ifdef DEBUG
-                    fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
-                    fflush(stdout);
+			fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
+			fflush(stdout);
 #endif
-                }
-
-            }
-        }
+		    }
+		}
+	    }
+	}
     }
 
 #ifdef DEBUG
@@ -208,7 +244,7 @@ static void *comm_thread_func(void *arnd){
     double st, et; 
     
     /* segment size */
-    size_t segment_size;
+    size_t segment_size, size;
     
     /* time for cond_timedwait  */
     struct timespec pctw_t;
@@ -223,7 +259,6 @@ static void *comm_thread_func(void *arnd){
     
     pctw_t.tv_sec = 2;
     pctw_t.tv_nsec = 0;
-    
     nd->pp_chtimeout_stime = gettimeofday_sec();
     while ( 1 ) {
 #ifdef DEBUG
@@ -235,7 +270,8 @@ static void *comm_thread_func(void *arnd){
         
         /* if handle queue is empty, the comm. thread sleeps. */
         if ( nd->pp_finflag != 1 && 
-             nd->pp_shqtail - nd->pp_shqhead == 0 && nd->pp_rhqtail - nd->pp_rhqhead == 0 ) {
+             nd->pp_shqtail - nd->pp_shqhead == 0 && 
+	     nd->pp_rhqtail - nd->pp_rhqhead == 0 ) {
             pthread_cond_timedwait(&(nd->pp_cond), &(nd->pp_mutex), &pctw_t); 
         }
         nd->pp_chtimeout_stime = gettimeofday_sec();
@@ -258,45 +294,41 @@ static void *comm_thread_func(void *arnd){
             fprintf(stdout, "comm_thread_func; nd->rhdlq[%" PRIu64 "] %p\n", rqidx, & nd->rhdlq[rqidx]);
             exit(1);
         }
-        
-        /* if status is PPSTREAM_START or PPSTREAM_COMM */
-        if ( nd->shdlq[sqidx].pp_status == PPSTREAM_START || nd->shdlq[sqidx].pp_status == PPSTREAM_COMM ) {
-            switch ( nd->shdlq[sqidx].pp_type ) {
-            case PPSTREAM_WRITE:
-                nd->pp_chtimeout_stime = gettimeofday_sec();
+        if ( nd->rhdlq[rqidx].pp_type == PPSTREAM_READ) {
+	    /* if status is PPSTREAM_START or PPSTREAM_COMM */
+	    switch (nd->rhdlq[rqidx].pp_status) {
+	    case PPSTREAM_START:
+		nd->pp_chtimeout_stime = gettimeofday_sec();
 #ifdef DEBUG
-                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " shd_type %d \n",nd->pp_shqhead, nd->shdlq[sqidx].pp_type );
-                fflush( stdout );
+		fprintf( stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " shd_type %d \n",nd->pp_rhqhead, nd->rhdlq[rqidx].pp_type );
+		fflush( stdout );
 #endif
-                /* get segment size */
-                segment_size = get_segsize ( nd, &(nd->shdlq[sqidx]) );
-                
-                /* send data  */
-                rc = ( size_t )send( nd->pp_sock, nd->shdlq[sqidx].pp_addr + nd->shdlq[sqidx].pp_compsize, segment_size, MSG_DONTWAIT );
-
+		/* get segment size */
+		size = -1;
+		
+		/* send data  */
+		rc = ( size_t )recv( nd->pp_sock, &size, sizeof(size), MSG_DONTWAIT );
+		
 #ifdef DEBUG
-                perror( "comm_thread_func: send return code" );
-                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " rc %d\n", nd->pp_shqhead, rc );
-                fflush( stdout );
+		
+		perror( "comm_thread_func: send return code" );
+		fprintf( stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " rc %d\n", nd->pp_rhqhead, rc );
+		fprintf( stdout, "comm_thread_func: PPSTREAM_READ: request: size %zu rc %ld \n", size, rc );
+		fflush( stdout );
+		
+		if ( rc == sizeof(size) ) {
+		    nd->rhdlq[rqidx].pp_sendsize = size;
+		}
 #endif
-
-                /* check communication status */
-                check_comm_status( nd, &(nd->shdlq[sqidx]), PPSTREAM_WRITE, rc ); 
+		/* check communication status */
+		check_comm_status( nd, &(nd->rhdlq[rqidx]), PPSTREAM_READ, rc ); 
 #ifdef DEBUG
-                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
-                         nd->pp_shqhead, nd->shdlq[sqidx].pp_size, nd->shdlq[sqidx].pp_compsize, rc );
-                fflush( stdout );
+		fprintf( stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
+			     nd->pp_rhqhead, nd->rhdlq[rqidx].pp_size, nd->rhdlq[rqidx].pp_compsize, rc );
+		fflush( stdout );
 #endif
-
-                break;
-            
-            default:
-                break;
-            }
-        }
-        if ( nd->rhdlq[rqidx].pp_status == PPSTREAM_START || nd->rhdlq[rqidx].pp_status == PPSTREAM_COMM ) {
-            switch ( nd->rhdlq[rqidx].pp_type ) {
-            case PPSTREAM_READ:
+		break;
+	    case PPSTREAM_COMM:
                 nd->pp_chtimeout_stime = gettimeofday_sec();
 #ifdef DEBUG
                 fprintf(stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " rhd_type %d\n", nd->pp_rhqhead,  nd->rhdlq[rqidx].pp_type);
@@ -310,7 +342,7 @@ static void *comm_thread_func(void *arnd){
                 
 #ifdef DEBUG
                 perror( "comm_thread_func: recv return code" );
-                fprintf( stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " rc %d\n", nd->pp_rhqhead,  rc );                
+                fprintf( stdout, "comm_thread_func: PPSTREAM_READ: rhd %" PRIu64 " rc %d\n", nd->pp_rhqhead,  rc );
 #endif
                 /* check communication status */
                 check_comm_status( nd, &( nd->rhdlq[rqidx] ), PPSTREAM_READ, rc );
@@ -319,12 +351,95 @@ static void *comm_thread_func(void *arnd){
                          nd->pp_rhqhead, nd->rhdlq[rqidx].pp_size, nd->rhdlq[rqidx].pp_compsize, rc );                
                 fflush( stdout );
 #endif            
-                break;
-            
-            default:
-                break;
-            }
-        }
+		break;
+	    case PPSTREAM_OVERREAD:
+                nd->pp_chtimeout_stime = gettimeofday_sec();
+#ifdef DEBUG
+                fprintf(stdout, "comm_thread_func: PPSTREAM_READ: PPSTREAM_OVERREAD: rhd %" PRIu64 " rhd_type %d\n", nd->pp_rhqhead,  nd->rhdlq[rqidx].pp_type);
+                fflush(stdout);
+#endif
+                /* get segment size */
+                segment_size = get_segsize ( nd, &(nd->rhdlq[rqidx]) );
+                
+                /* recv data  */
+                rc = (size_t)recv(nd->pp_sock, NULL, segment_size, MSG_DONTWAIT);
+                
+#ifdef DEBUG
+                perror( "comm_thread_func: recv return code" );
+                fprintf( stdout, "comm_thread_func: PPSTREAM_READ: PPSTREAM_OVERREAD: rhd %" PRIu64 " rc %d\n", nd->pp_rhqhead,  rc );
+#endif
+                /* check communication status */
+                check_comm_status( nd, &( nd->rhdlq[rqidx] ), PPSTREAM_READ, rc );
+#ifdef DEBUG 
+                fprintf( stdout, "comm_thread_func: PPSTREAM_READ: PPSTREAM_OVERREAD: rhd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
+                         nd->pp_rhqhead, nd->rhdlq[rqidx].pp_size, nd->rhdlq[rqidx].pp_compsize, rc );                
+                fflush( stdout );
+#endif            
+		break;
+	    default:
+		break;
+	    }
+	}
+	
+	if ( nd->shdlq[sqidx].pp_type == PPSTREAM_WRITE ) {
+	    switch ( nd->shdlq[sqidx].pp_status ) {
+	    case PPSTREAM_START:
+                nd->pp_chtimeout_stime = gettimeofday_sec();
+#ifdef DEBUG
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " shd_type %d \n", 
+			 nd->pp_shqhead, nd->shdlq[sqidx].pp_type );
+                fflush( stdout );
+#endif
+                /* send size info  */
+                size = nd->shdlq[sqidx].pp_size;
+                
+                /* send size info  */
+		rc = ( size_t )send( nd->pp_sock, &size, sizeof(size), MSG_DONTWAIT );
+#ifdef DEBUG
+                perror( "comm_thread_func: send return code" );
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " rc %d\n", nd->pp_shqhead, rc );
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: reqest: size %zu rc %ld \n", size, rc );
+                fflush( stdout );
+#endif
+		/* check communication status */
+                check_comm_status( nd, &(nd->shdlq[sqidx]), PPSTREAM_WRITE, rc ); 
+#ifdef DEBUG
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
+                         nd->pp_shqhead, nd->shdlq[sqidx].pp_size, nd->shdlq[sqidx].pp_compsize, rc );
+                fflush( stdout );
+#endif
+		break;
+	    case PPSTREAM_COMM:
+                nd->pp_chtimeout_stime = gettimeofday_sec();
+#ifdef DEBUG
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " shd_type %d \n", 
+			 nd->pp_shqhead, nd->shdlq[sqidx].pp_type );
+                fflush( stdout );
+#endif
+                /* get segment size */
+                segment_size = get_segsize ( nd, &(nd->shdlq[sqidx]) );
+                
+                /* send data  */
+                rc = ( size_t )send( nd->pp_sock, nd->shdlq[sqidx].pp_addr + nd->shdlq[sqidx].pp_compsize, segment_size, MSG_DONTWAIT );
+		
+#ifdef DEBUG
+                perror( "comm_thread_func: send return code" );
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " rc %d\n", nd->pp_shqhead, rc );
+                fflush( stdout );
+#endif
+		
+                /* check communication status */
+                check_comm_status( nd, &(nd->shdlq[sqidx]), PPSTREAM_WRITE, rc ); 
+#ifdef DEBUG
+                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
+                         nd->pp_shqhead, nd->shdlq[sqidx].pp_size, nd->shdlq[sqidx].pp_compsize, rc );
+                fflush( stdout );
+#endif
+		break;
+	    default:
+		break;
+	    }
+	}
         
 #ifdef DEBUG
         fprintf( stdout, "comm_thread_func: pthread_mutex_unlock\n" );
@@ -348,8 +463,7 @@ static void *comm_thread_func(void *arnd){
             fprintf( stdout, "comm_thread_func: server connect close.\n" );
             fflush( stdout );
 #endif
-            
-            close(nd->pp_sock);
+	    close(nd->pp_sock);
 
             FD_ZERO(&fds);
             FD_SET(nd->pp_socks, &fds);
@@ -369,11 +483,11 @@ static void *comm_thread_func(void *arnd){
                     fprintf( stdout, "comm_thread_func: the accept of server successes.\n" );
                     fflush( stdout );
 #endif
-                    //ppstream_sync(nd);
-                }
+		}
             }
         }
-        /* if network descriptor closes, thread is finish. */
+	
+	/* if network descriptor closes, thread is finish. */
         if ( nd->pp_finflag == 1 ) {
 #ifdef DEBUG
             fprintf( stdout, "comm_thread_func: fin.\n" );
@@ -382,11 +496,13 @@ static void *comm_thread_func(void *arnd){
             return 0;
         }
     }
-exit:
+ exit:
+    
 #ifdef DEBUG
-            fprintf( stdout, "comm_thread_func: exit.\n" );
-            fflush( stdout );
+    fprintf( stdout, "comm_thread_func: exit.\n" );
+    fflush( stdout );
 #endif
+    
     exit(1);
 }
 
@@ -402,11 +518,12 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     if ( nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
         return NULL;
     }
-
+    
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
     if ( NULL == hdl ) {
         return NULL;
     }
+    
     memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->pp_shqtail;
     qidx = id % MAX_HANDLE_QSIZE;
@@ -431,12 +548,12 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     hdl->nd = nd;
     hdl->pp_msize = 0;
     hdl->pp_hdltype = PPSTREAM_INPUT;
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_input: fin.\n" );
     fflush( stdout );
 #endif
-
+    
     return hdl;
 }
 
@@ -444,7 +561,6 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr,
     
     ppstream_handle_t *hdl;
     uint64_t id, qidx;
-
 
 #ifdef DEBUG
     fprintf( stdout, "ppstream_output: start.\n" );
@@ -495,7 +611,7 @@ int ppstream_test( ppstream_handle_t *hdl ){
     int rc = 0;
 
 #ifdef DEBUG
-    fprintf(stdout, "ppstream_test: start.\n");
+    //fprintf(stdout, "ppstream_test: start.\n");
     fflush(stdout);
 #endif
     
@@ -533,14 +649,14 @@ int ppstream_test( ppstream_handle_t *hdl ){
     
     /* release mutex */
     pthread_mutex_unlock( &(hdl->nd->pp_mutex ));
-
-exit:
-
+    
+ exit:
+    
 #ifdef DEBUG
-    fprintf(stdout, "ppstream_test: fin. \n");
+    //fprintf(stdout, "ppstream_test: fin. \n");
     fflush(stdout);
 #endif
-
+    
     return rc;
 }
 
@@ -559,7 +675,7 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
     
     write(nd->pp_sock, &dammy, sizeof(dammy));
     recv(nd->pp_sock, &dammy, sizeof(dammy), MSG_WAITALL);
-
+    
 #ifdef DEBUG
     fprintf(stdout, "ppstream_sync: fin.\n");
     fflush(stdout);
@@ -665,8 +781,8 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     /* if server */
     if (scflag == PPSTREAM_SERVER) { 
 #ifdef DEBUG
-    fprintf(stdout, "ppstream_open: server.\n");
-    fflush(stdout);
+	fprintf(stdout, "ppstream_open: server.\n");
+	fflush(stdout);
 #endif
         /* set hints for getaddrinfo on server */
         memset(&hints, 0, sizeof(hints)); 
@@ -715,20 +831,20 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         nd->pp_socks = sock;
         nd->pp_sock = sock_accept;
     }
+    
     /* if client */
     else if (scflag == PPSTREAM_CLIENT) {
 #ifdef DEBUG
-    fprintf(stdout, "ppstream_open: client.\n");
-    fflush(stdout);
+	fprintf(stdout, "ppstream_open: client.\n");
+	fflush(stdout);
 #endif
         /* set hints for getaddrinfo on server */
-        memset(&hints, 0, sizeof(hints)); 
+	memset(&hints, 0, sizeof(hints)); 
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         rc = getaddrinfo(nd->pp_ipaddr, nd->pp_port, &hints, &res);
         /* set address info form getaddrinfo */
-
-        st = gettimeofday_sec();
+	st = gettimeofday_sec();
         while ( 1 ) {
             et = gettimeofday_sec();
             if ( et - st > nd->pp_set_cntimeout ) goto exit;
@@ -782,8 +898,7 @@ connect_success:
     /* initialize communication thread. */
     rc = pthread_create( (pthread_t *)&( nd->pp_comm_thread_id ), NULL, comm_thread_func, (void *)nd );
     nd->pp_connect_status = PPSTREAM_CONNECTED;
-    //ppstream_sync( (ppstream_networkdescriptor_t *)nd );
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_open: fin.\n");
     fflush( stdout );
@@ -792,7 +907,6 @@ connect_success:
     return (ppstream_networkdescriptor_t *)nd;
 
 exit:
-
 #ifdef DEBUG
     fprintf( stdout, "ppstream_open: exit.\n");
     fflush( stdout );
@@ -850,9 +964,12 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     }
 
 #ifdef DEBUG
-    fprintf( stdout, "ppstream_set_networkinfo: hostname %s servname %s nt->pp_ipaddr %s np->pp_port %s.\n", hostname, servname, nt->pp_ipaddr, nt->pp_port );
+    fprintf( stdout, 
+	     "ppstream_set_networkinfo: hostname %s servname %s nt->pp_ipaddr %s np->pp_port %s.\n",
+	     hostname, servname, nt->pp_ipaddr, nt->pp_port );
     fflush( stdout );
 #endif
+    
     /* set hostname on network info */
     if ( hostname != NULL ) {
         nt->pp_ipaddr = strdup(hostname);
@@ -880,12 +997,13 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     nt->pp_set_nretry = PPSTREAM_DNRETRY;
     
 #ifdef DEBUG
-    fprintf( stdout, "ppstream_set_networkinfo: hname %s sname %s ipaddr %s pp_port %s pp_set_timeout %f, pp_set_segment %zu, pp_set_nretry %d\n", 
+    fprintf( stdout, 
+	     "ppstream_set_networkinfo: hname %s sname %s ipaddr %s pp_port %s pp_set_timeout %f, pp_set_segment %zu, pp_set_nretry %d\n", 
              hostname, servname, nt->pp_ipaddr, nt->pp_port, nt->pp_set_timeout, nt->pp_set_segment, nt->pp_set_nretry );
     fprintf( stdout, "ppstream_set_networkinfo: fin.\n");
     fflush( stdout );
 #endif 
-  
+    
     return nt;
 }
 
@@ -895,11 +1013,11 @@ void ppstream_free_networkinfo(ppstream_networkinfo_t *nt){
     fprintf( stdout, "ppstream_free_networkinfo: start.\n");
     fflush( stdout );
 #endif 
-
+    
     if ( nt != NULL ) {
         free( nt );
     }
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_free_networkinfo: fin.\n");
     fflush( stdout );
@@ -920,6 +1038,7 @@ void ppstream_set_cntimeout(ppstream_networkdescriptor_t *nd, double timeout) {
 #ifdef DEBUG
     fprintf( stdout, "ppstream_set_cntimeout: fin.\n");
     fflush( stdout );
-#endif 
+#endif
+    
     return;
 }
