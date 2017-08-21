@@ -31,7 +31,6 @@ int main(int argc, char **argv){
     printf("pc: start nquery nd2 handle.\n");
     while (nquery(hdl));
     printf("pc: finish nquery nd2 handle.\n");
-    
     fprintf(stdout, "pc: recv chars [%s]\n", str); 
     
     printf("pc: start nclose \n");

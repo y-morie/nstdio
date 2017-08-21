@@ -30,16 +30,14 @@ typedef struct ppstream_networkinfo {
     size_t pp_set_segment;
     double pp_set_timeout;
     double pp_set_cntimeout;
-    int pp_set_nretry;
 } ppstream_networkinfo_t;
 
 typedef struct ppstearm_handlequeue {
-    uint64_t pp_id;
     void *pp_addr;
-    size_t pp_sizeorg;
     size_t pp_size;
     size_t pp_sendsize;
     size_t pp_compsize;
+    size_t pp_rsize;
     int pp_type;
     int pp_status;
     double pp_stime;
@@ -71,13 +69,11 @@ typedef struct ppstream_networkdescriptor{
     double pp_set_cntimeout;
     double pp_chtimeout_stime;
     double pp_chtimeout_etime;
-    int pp_set_nretry;
-    int cerrcode;
 } ppstream_networkdescriptor_t;
 
 typedef struct ppstream_handle {
     uint64_t pp_id;
-    uint64_t pp_msize;
+    size_t pp_msize;
     ppstream_networkdescriptor_t *nd;
     int pp_hdltype;
 } ppstream_handle_t;
