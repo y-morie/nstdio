@@ -20,17 +20,17 @@ int main(int argc, char **argv){
     nt = setnet(argv[1], argv[2], NTCP);
     str = (char *)malloc(sizeof(char) * 256);
     
-    printf("pc: start nopen nt1.\n");
+    printf("pc: start nopen.\n");
     nd = nopen(nt, "c");
-    printf("pc: finish nopen nt1.\n");
+    printf("pc: finish nopen.\n");
     
     //nsync(nd);
     printf("pc: start nread.\n");
     hdl = nread(nd, str, 256);
     printf("pc: finish nread.\n");
-    printf("pc: start nquery nd2 handle.\n");
+    printf("pc: start nquery handle.\n");
     while (nquery(hdl));
-    printf("pc: finish nquery nd2 handle.\n");
+    printf("pc: finish nquery handle.\n");
     fprintf(stdout, "pc: recv chars [%s]\n", str); 
     
     printf("pc: start nclose \n");
