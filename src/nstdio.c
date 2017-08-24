@@ -20,11 +20,12 @@ void nsync(ND *nd){
 NHDL *nwrite( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
-
+    
     if (nd->pp_mode == PPSTREAM_MODE_RO) {
         fprintf(stderr, "ND is read only mode");
         return NULL;
     }
+
     hdl = (NHDL * )ppstream_input(nd, addr, size);
     
     return hdl;

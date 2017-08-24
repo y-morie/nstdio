@@ -22,6 +22,10 @@ int main(int argc, char **argv){
     
     printf("node: start nopen \n");
     nd = nopen(nt, "c");
+    if ( NULL == nd ) {
+      printf("node: nopen failed.\n");
+      exit(1);
+    }
     printf("node: finish nopen \n");
     //nsync(nd);
     printf("node: start nwrite \n");

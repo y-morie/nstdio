@@ -21,6 +21,10 @@ int main(int argc, char **argv){
     
     printf("sv: start nopen \n");
     nd = nopen(nt, "s");
+    if ( NULL == nd ) {
+      printf("sv: nopen failed.\n");
+      exit(1);
+    }
     printf("sv: finish nopen \n");
     //nsync(nd);
     printf("sv: start nread \n");

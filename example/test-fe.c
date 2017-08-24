@@ -24,11 +24,19 @@ int main(int argc, char **argv){
     
     printf("fe: start nopen nt2.\n");
     nd2 = nopen(nt2, "s");
+    if ( NULL == nd2 ) {
+      printf("fe: nopen failed.\n");
+      exit(1);
+    }
     printf("fe: finish nopen nt2.\n");
     //nsync(nd);
     
     printf("fe: start nopen nt1.\n");
     nd1 = nopen(nt1, "s");
+    if ( NULL == nd1 ) {
+      printf("fe: nopen failed.\n");
+      exit(1);
+    }
     printf("fe: finish nopen nt1.\n");
     
     printf("fe: start nread nd1.\n");

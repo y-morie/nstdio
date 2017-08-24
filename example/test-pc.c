@@ -22,6 +22,10 @@ int main(int argc, char **argv){
     
     printf("pc: start nopen.\n");
     nd = nopen(nt, "c");
+    if ( NULL == nd ) {
+      printf("pc: nopen failed.\n");
+      exit(1);
+    }
     printf("pc: finish nopen.\n");
     
     //nsync(nd);
