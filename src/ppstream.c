@@ -407,31 +407,31 @@ static void *comm_thread_func(void *arnd){
 #endif
         pthread_mutex_unlock( &( nd->pp_mutex ) );
         
+	/* check the timout of connection. */
         nd->pp_chtimeout_etime = gettimeofday_sec();
         if ( nd->pp_chtimeout_etime - nd->pp_chtimeout_stime > nd->pp_set_cntimeout ) {
-            nd->pp_connect_status == PPSTREAM_UNCONNECTED;
+            nd->pp_connect_status = PPSTREAM_UNCONNECTED;
         }
 	
         /* if server and unconneted, close socket. */
         if ( nd->pp_scflag == PPSTREAM_SERVER && nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
 	    int addrlen;
             int sock_accept;
-            fd_set rfds, fds;
+            fd_set fds;
             struct timeval timeout;
             
 #ifdef DEBUG
             fprintf( stdout, "comm_thread_func: server connect close.\n" );
             fflush( stdout );
 #endif
-
-	    while(1);
-            FD_ZERO(&fds);
+	    FD_ZERO(&fds);
             FD_SET(nd->pp_socks, &fds);
             
             /* set timeout 1 sec */
             timeout.tv_sec =  1;
             timeout.tv_usec = 0;
-            
+
+            /* check to be able to connetion or not */
             select(nd->pp_socks + 1, &fds, NULL, NULL, &timeout);
             
             addrlen = nd->pp_ai->ai_addrlen;
