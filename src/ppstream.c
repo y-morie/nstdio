@@ -871,7 +871,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	    for ( ai = res; ai; ai = ai->ai_next ) {
 		if ( connect(sockary[iai], ai->ai_addr, ai->ai_addrlen) < 0 ) {
 		    if ( errno != EINPROGRESS ) {
-			if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED errno != EISCONN ) {
+			if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED && errno != EISCONN ) {
 			    perror("ppsream_open: client: connect() failed");
 			    goto exit;
 			}
