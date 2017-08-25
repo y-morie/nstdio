@@ -47,6 +47,7 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
+/* get segment size */
 size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hdlq ) {
     
     size_t rdata; // rest of data size. 
@@ -59,15 +60,18 @@ size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hd
     
     /* set default segment size */
     set_segment = nd->pp_set_segment;
+    
     /* set # of segment */
     rcount = rdata / set_segment; 
     
     /* set segment size */
+    /* if # of segment is more than 2, set default */
     if ( rcount >= 1) {
         segment_size = set_segment;
     }
+    /* otherwise, set rest size */
     else { 
-        segment_size = rdata  % set_segment;
+        segment_size = rdata % set_segment;
     }
     
     return segment_size;
@@ -83,20 +87,23 @@ void check_comm_status( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t
     /* check send/recv header  */
     if ( rc == sizeof(size_t) && hdlq->pp_status ==  PPSTREAM_START ) {
 	nd->pp_chtimeout_stime = gettimeofday_sec();
-	/* if read */
+	/* if flag is read */
 	if ( PPSTREAM_READ == flag ) {
-	    /* recvsize > sendsize */
+	    /* if recvsize > sendsize, set sizesize */
 	    if ( hdlq->pp_size >= hdlq->pp_sendsize ) {
 		hdlq->pp_size = hdlq->pp_sendsize;
 	    }
 	}
+	/* next status */
     	hdlq->pp_status = PPSTREAM_COMM;
     }
     else {
 	if ( rc > 0 ) {
-	    /* connet is green, reset # of error counts. */
+	    /* connet is green, reset start time of connection timeout. */
 	    nd->pp_chtimeout_stime = gettimeofday_sec();
+	    /* update complete message size. */
 	    hdlq->pp_compsize += rc;
+	    
 	    if ( PPSTREAM_WRITE == flag ) {
 		if ( hdlq->pp_compsize == hdlq->pp_size ) {
 		    hdlq->pp_status = PPSTREAM_COMP;
@@ -130,10 +137,11 @@ void check_comm_status( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t
 		}
 	    }
 	}
+	/* check whether connection is dead or not. */
 	else {
 	    if ( rc == 0 ) {
 		if ( nd->pp_set_segment != 0 ) {
-		    /*  dissconnect on network description. */
+		    /*  disconnect on network description. */
 		    nd->pp_connect_status = PPSTREAM_UNCONNECTED;
 #ifdef DEBUG
 		    fprintf(stdout, "check_comm_status: status unconnected rc %d.\n", rc);
@@ -229,12 +237,12 @@ static void *comm_thread_func(void *arnd){
         if ( &nd->shdlq[sqidx] == NULL ) {
             fprintf(stderr, "comm_thread_func: nd->shdlq[%" PRIu64 "] %p\n",
 		    sqidx, & nd->shdlq[sqidx]);
-            exit(1);
+	    goto exit;
         }
         if ( &nd->rhdlq[rqidx] == NULL ) {
             fprintf(stderr, "comm_thread_func; nd->rhdlq[%" PRIu64 "] %p\n",
 		    rqidx, & nd->rhdlq[rqidx]);
-            exit(1);
+            goto exit;
         }
 
 	/* handle is READ */
@@ -264,6 +272,7 @@ static void *comm_thread_func(void *arnd){
 		if ( rc == sizeof(size) ) {
 		    nd->rhdlq[rqidx].pp_sendsize = size;
 		}
+		
 		/* check communication status */
 		check_comm_status( nd, &(nd->rhdlq[rqidx]), PPSTREAM_READ, rc ); 
 #ifdef DEBUG
@@ -428,7 +437,7 @@ static void *comm_thread_func(void *arnd){
             FD_SET(nd->pp_socks, &fds);
             
             /* set timeout 1 sec */
-            timeout.tv_sec =  1;
+            timeout.tv_sec = 1;
             timeout.tv_usec = 0;
 
             /* check to be able to connetion or not */
@@ -463,6 +472,7 @@ static void *comm_thread_func(void *arnd){
     fflush( stdout );
 #endif
     
+    fprintf( stderr, "comm_thread_func: exception error occurs, and exit.\n" );
     exit(1);
 }
 
@@ -650,8 +660,8 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
 ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* socket descriptor */
-    int sock, sock_accept;
-    
+    int sock, sock_accept, *sockary, maxsock;
+
     /* address length for accept */
     socklen_t addrlen;
     
@@ -688,6 +698,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     int rselct = 0;
     ssize_t rrcv = 0;
     int dummy = 0;
+    int iai = 0, nai, ai_id;
     
     signal( SIGPIPE , SIG_IGN );
     
@@ -725,7 +736,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     nd->pp_devflag = nt->pp_devflag;
     /* finalization flag of comm. thread */
     nd->pp_finflag = 0;
-    
+
     /* set initial of handle Q pointer */
     nd->pp_shqhead = hqhead;
     nd->pp_shqtail = hqtail;
@@ -814,33 +825,51 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         rc = getaddrinfo(nd->pp_ipaddr, nd->pp_port, &hints, &res);
-
+	
+	nai = 0;
+	for ( ai = res; ai; ai = ai->ai_next ) {
+	    nai++;
+	}
+	sockary = (int *)malloc( sizeof(int) * nai );
+	if ( sockary == NULL ) {
+	    fprintf(stderr, "ppstream_open: client: malloc error.\n");
+	    rc = -1;
+	    goto exit;
+	}
         /* set address info form getaddrinfo */
 	for ( ai = res; ai; ai = ai->ai_next ) {
 	    /* generates socket for server and client */
-	    if ( ( sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
+	    if ( ( sockary[iai] = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
 		perror("ppstream_open: client: socket() failed");
 		rc = -1;
 		goto exit;
 	    }
+	    iai++;
+	}
 	    
-	    /* make socket non-blocking */
-	    on = 1;
-	    ioctl(sock, FIONBIO, &on);
-	    
-	    st = gettimeofday_sec();
-	    while ( 1 ) {
-		et = gettimeofday_sec();
-		if ( et - st > nd->pp_set_cntimeout ) {
+	/* make socket non-blocking */
+	on = 1;
+	for( iai = 0; iai < nai; iai++ ) {
+	    ioctl(sockary[iai], FIONBIO, &on);
+	}
+	
+	st = gettimeofday_sec();
+	while ( 1 ) {
+	    et = gettimeofday_sec();
+	    if ( et - st > nd->pp_set_cntimeout ) {
 #ifdef DEBUG
-		    fprintf(stdout, "ppstream_open: client: timeout.\n");
-		    fflush( stdout );
+		fprintf(stdout, "ppstream_open: client: timeout.\n");
+		fflush( stdout );
 #endif
-		    close(sock);
-		    break;
+		for ( iai = 0; iai < nai; iai++ ) {
+		    close(sockary[iai]);
 		}
-		/* connect ai->pp_addr */
-		if ( connect(sock, ai->ai_addr, ai->ai_addrlen) < 0 ) {
+		break;
+	    }
+	    /* connect ai->pp_addr */
+	    iai = 0;
+	    for ( ai = res; ai; ai = ai->ai_next ) {
+		if ( connect(sockary[iai], ai->ai_addr, ai->ai_addrlen) < 0 ) {
 		    if ( errno != EINPROGRESS ) {
 			if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED ) {
 			    perror("ppsream_open: client: connect() failed");
@@ -852,55 +881,65 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		    }
 		}
 		else {
-		    nd->pp_sock = sock;
+		    nd->pp_sock = sockary[iai];
+		    ai_id = iai;
 		    goto connect_success;
 		}
-		
-		/* set filedescriptor set */
-		FD_ZERO(&rfds);
-		FD_SET(sock, &rfds);
-		
-		/* set timeout 1 sec */
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-		
-		rrcv = recv(sock, &dummy, 0, 0);
-
+		iai++;
+	    }
+	    
+	    /* set filedescriptor set */
+	    FD_ZERO(&rfds);
+	    for( iai = 0; iai < nai; iai++ ) {
+		FD_SET(sockary[iai], &rfds);
+	    }
+	    maxsock = -1;
+	    for( iai = 0; iai < nai; iai++ ) {
+		if ( maxsock < sockary[iai] ) {
+		    maxsock = sockary[iai];
+		}
+	    }
+	    
+	    /* set timeout 1 sec */
+	    timeout.tv_sec = 1;
+	    timeout.tv_usec = 0;
+	    
+	    rrcv = recv(sock, &dummy, 0, 0);
+	    
 #ifdef DEBUG
-		perror("ppstream_open: recv return code");
-		printf("ppstream_open: cl: recv ret %zd\n",  rrcv);
+	    perror("ppstream_open: recv return code");
+	    printf("ppstream_open: cl: recv ret %zd\n",  rrcv);
+	    fflush(stdout);
+#endif
+	    
+	    if ( rselct = select(maxsock + 1, &rfds, NULL, NULL, &timeout) > 0 ) {
+#ifdef DEBUG
+		printf("ppstream_open: cl: select: ret %d\n", rselct);
 		fflush(stdout);
 #endif
-		
-		if ( rselct = select(sock + 1, &rfds, NULL, NULL, &timeout) > 0 ) {
-#ifdef DEBUG
-		    printf("ppstream_open: cl: select: ret %d\n", rselct);
-		    fflush(stdout);
-#endif
-		    if ( FD_ISSET( sock, &rfds ) ) {
+		for( iai = 0; iai < nai; iai++ ) {
+		    if ( FD_ISSET( sockary[iai], &rfds ) ) {
 			rrcv = recv(sock, &dummy, sizeof(dummy), 0);
-			
 			if ( rrcv > 0 ) {
-			    nd->pp_sock = sock;
+			    nd->pp_sock = sockary[iai];
+			    ai_id = iai;
 #ifdef DEBUG
 			    printf("ppstream_opne: cl: recv: ret %zd\n", rrcv);
 			    fflush(stdout);
 #endif
 			    goto connect_success;
 			}
-			else {
-			    sleep(1);
-			}
 		    }
 		}
+		sleep(1);
 	    }
 	}
 	/* connection is not success. */
 	goto exit;
     }
     else{
-	fprintf(stderr,
-		"ppstream_open: error occurs, because of not seting PPSTREAM_CLIENT or PPSTREAM_SERVER. \n");
+	fprintf( stderr,
+		 "ppstream_open: error occurs, because of not seting PPSTREAM_CLIENT or PPSTREAM_SERVER. \n" );
 	goto exit;
     }
  
@@ -908,6 +947,11 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* if client, free resources */
     if ( scflag == PPSTREAM_CLIENT ) {
+	for ( iai = 0; iai < nai; iai++ ) {
+	    if ( iai != ai_id ) {
+		close(sockary[iai]);
+	    }
+	}
         freeaddrinfo(res);
     }
     
@@ -957,6 +1001,7 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
         /* free socket for server */
         close( nd->pp_socks );
     }
+    /* free the network descriptor */
     if ( NULL != nd ) {
         free(nd);
     }
@@ -983,7 +1028,7 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     if ( NULL == nt ) {
         return NULL;
     }
-    memset(nt, 0, sizeof(ppstream_networkinfo_t));
+    memset( nt, 0, sizeof(ppstream_networkinfo_t) );
 #ifdef DEBUG
     fprintf( stdout, 
 	     "ppstream_set_networkinfo: hostname %s servname %s nt->pp_ipaddr %s nt->pp_port %s.\n",
@@ -1012,6 +1057,7 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     /* set server or client flag */
     nt->pp_scflag = scflag;
     
+    /* set default value. */
     nt->pp_set_timeout = PPSTREAM_DTIMEOUT;
     nt->pp_set_cntimeout = PPSTREAM_DCNTIMEOUT;
     nt->pp_set_segment = PPSTREAM_DSEGMENT;

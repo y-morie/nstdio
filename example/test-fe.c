@@ -22,36 +22,36 @@ int main(int argc, char **argv){
     nt2 = setnet(NULL, argv[2], NTCP);
     str = (char *)malloc(sizeof(char) * 256);
     
-    printf("fe: start nopen nt2.\n");
+    printf("fe: start nopen for pc.\n");
     nd2 = nopen(nt2, "s");
     if ( NULL == nd2 ) {
       printf("fe: nopen failed.\n");
       exit(1);
     }
-    printf("fe: finish nopen nt2.\n");
+    printf("fe: finish nopen for pc.\n");
     //nsync(nd);
     
-    printf("fe: start nopen nt1.\n");
+    printf("fe: start nopen for node.\n");
     nd1 = nopen(nt1, "s");
     if ( NULL == nd1 ) {
       printf("fe: nopen failed.\n");
       exit(1);
     }
-    printf("fe: finish nopen nt1.\n");
+    printf("fe: finish nopen for node\n");
     
-    printf("fe: start nread nd1.\n");
+    printf("fe: start nread from node.\n");
     hdl = nread(nd1, str, 256);
-    printf("fe: finish nread nd1.\n");
-    printf("fe: start nquery nd1 handle.\n");
+    printf("fe: finish nread from node.\n");
+    printf("fe: start nquery handle for node.\n");
     while (nquery(hdl));
-    printf("fe: finish nquery nd1 handle.\n");
+    printf("fe: finish nquery handle for node.\n");
     
-    printf("fe: start nwrite nd2. \n");
+    printf("fe: start nwrite to pc. \n");
     hdl = nwrite(nd2, str, 256);
-    printf("fe: finish nwrite nd2. \n");
-    printf("fe: start nquery nd2 handle. \n");
+    printf("fe: finish nwrite to pc. \n");
+    printf("fe: start nquery handle for pc. \n");
     while (nquery(hdl));
-    printf("fe: finish nquery nd2 handle. \n");
+    printf("fe: finish nquery handle for pc. \n");
     
     printf("fe: start nclose \n");
     nclose(nd1);
