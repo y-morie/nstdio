@@ -9,14 +9,19 @@ int main(int argc, char **argv){
     ND *nd;
     NHDL *hdl;
     char *str;
-    
-    if (argc != 2) {
+    int rc;
+    if (argc != 2 && argc != 3) {
         fprintf(stderr, "command error \n");
-        fprintf(stderr, "%s port \n", argv[0]);
+        fprintf(stderr, "%s [hostname] port \n", argv[0]);
         exit(1);
     }
-    
-    nt = setnet(NULL, argv[1], NTCP);
+    if ( argc == 2 ) {
+	nt = setnet(NULL, argv[1], NTCP);
+    }
+    if ( argc == 3 ) {
+	nt = setnet(argv[1], argv[2], NTCP);
+    }
+
     str = (char *)malloc(sizeof(char) * 256);
     
     printf("sv: start nopen \n");
@@ -32,7 +37,12 @@ int main(int argc, char **argv){
     printf("sv: finish nread \n");
     
     printf("sv: start nquery \n");
-    while(nquery(hdl));
+    while(rc = nquery(hdl)) {
+	if ( rc == -2 ) {
+	    printf("sv: error: disconnect.\n");
+	    exit(-1);
+	}
+    }
     printf("sv: finish nquery \n");
     printf("sv: msize %" PRIu64 "\n", hdl->pp_msize);
     printf("sv: get data  [%s]\n", str);

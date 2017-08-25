@@ -26,6 +26,7 @@ int main(int argc, char **argv){
       printf("cl: nopen failed.\n");
       exit(1);
     }
+
     printf("cl: finish nopen \n");
     //nsync(nd);
     printf("cl: start nwrite \n");
