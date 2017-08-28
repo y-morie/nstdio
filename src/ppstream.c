@@ -897,27 +897,37 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		    if ( errno == EISCONN ) {
 		      nd->pp_sock = sockary[iai];
 		      ai_id = iai;
+#ifdef DEBUG		      
 		      perror("0 connect()");
+#endif
 		      goto connect_success;
 		    }
 		    else {
 		        if ( errno != EINPROGRESS ) {
 			    if ( errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED ) {
+#ifdef DEBUG
 			        perror("ppsream_open: client: connect() failed");
+#endif
 				goto exit;
 			    }
 			    else {
+#ifdef DEBUG
 			        perror("2 connect()");
+#endif
 			        sleep(1);
 			    }
 			}
 			else {
+#ifdef DEBUG
 			    perror("3 connect()");
+#endif
 			}
 		    }
 		}
 		else {
+#ifdef DEBUG
 		    perror("4 connect()");
+#endif
 		    nd->pp_sock = sockary[iai];
 		    ai_id = iai;
 		    goto connect_success;
