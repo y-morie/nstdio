@@ -661,7 +661,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* socket descriptor */
     int sock, sock_accept, *sockary, maxsock;
-
+    
     /* address length for accept */
     socklen_t addrlen;
     
@@ -672,6 +672,8 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* flag of server or client */
     int scflag;
+    /* sock close flag */
+    int *flag;
     
     /* socket option */
     int on; 
@@ -830,30 +832,27 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	for ( ai = res; ai; ai = ai->ai_next ) {
 	    nai++;
 	}
+	
+#ifdef DEBUG
+	printf("nai %d\n", nai);
+	fflush(stdout);
+#endif
 	sockary = (int *)malloc( sizeof(int) * nai );
 	if ( sockary == NULL ) {
 	    fprintf(stderr, "ppstream_open: client: malloc error.\n");
 	    rc = -1;
 	    goto exit;
 	}
-        /* set address info form getaddrinfo */
-	for ( ai = res; ai; ai = ai->ai_next ) {
-	    /* generates socket for server and client */
-	    if ( ( sockary[iai] = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
-		perror("ppstream_open: client: socket() failed");
-		rc = -1;
-		goto exit;
-	    }
-	    iai++;
+	memset(sockary, 0, sizeof(int) * nai);
+	flag = (int *) malloc ( sizeof(int) * nai );
+	if ( flag == NULL ) {
+	    fprintf(stderr, "ppstream_open: client: malloc error.\n");
+	    rc = -1;
+	    goto exit;
 	}
-	    
-	/* make socket non-blocking */
-	on = 1;
-	for( iai = 0; iai < nai; iai++ ) {
-	    ioctl(sockary[iai], FIONBIO, &on);
-	}
-	
-	st = gettimeofday_sec();
+	memset(flag, 0, sizeof(int) * nai);
+
+       	st = gettimeofday_sec();
 	while ( 1 ) {
 	    et = gettimeofday_sec();
 	    if ( et - st > nd->pp_set_cntimeout ) {
@@ -864,79 +863,143 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		for ( iai = 0; iai < nai; iai++ ) {
 		    close(sockary[iai]);
 		}
-		break;
+		goto exit;
 	    }
+	    iai = 0;
+	    /* set address info form getaddrinfo */
+	    for ( ai = res; ai; ai = ai->ai_next ) {
+	        /* generates socket for server and client */
+	        if ( flag[iai] == 0 ) {
+#ifdef DEBUG
+		    printf("create socket\n");
+		    fflush(stdout);
+#endif
+		    if ( ( sockary[iai] = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
+		        perror("ppstream_open: client: socket() failed");
+			rc = -1;
+			goto exit;
+		    }
+		    flag[iai] = 1;
+		    iai++;
+		}
+	    }
+
+	    /* make socket non-blocking */
+	    on = 1;
+	    for( iai = 0; iai < nai; iai++ ) {
+	      ioctl(sockary[iai], FIONBIO, &on);
+	    }
+
 	    /* connect ai->pp_addr */
 	    iai = 0;
 	    for ( ai = res; ai; ai = ai->ai_next ) {
-		if ( connect(sockary[iai], ai->ai_addr, ai->ai_addrlen) < 0 ) {
-		    if ( errno != EINPROGRESS ) {
-			if (errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED && errno != EISCONN ) {
-			    perror("ppsream_open: client: connect() failed");
-			    goto exit;
+	        if ( connect(sockary[iai], ai->ai_addr, ai->ai_addrlen) < 0 ) {
+		    if ( errno == EISCONN ) {
+		      nd->pp_sock = sockary[iai];
+		      ai_id = iai;
+		      perror("0 connect()");
+		      goto connect_success;
+		    }
+		    else {
+		        if ( errno != EINPROGRESS ) {
+			    if ( errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED ) {
+			        perror("ppsream_open: client: connect() failed");
+				goto exit;
+			    }
+			    else {
+			        perror("2 connect()");
+			        sleep(1);
+			    }
 			}
 			else {
-			    sleep(1);
+			    perror("3 connect()");
 			}
 		    }
 		}
 		else {
+		    perror("4 connect()");
 		    nd->pp_sock = sockary[iai];
 		    ai_id = iai;
 		    goto connect_success;
 		}
 		iai++;
 	    }
-	    
+	
 	    /* set filedescriptor set */
 	    FD_ZERO(&rfds);
 	    for( iai = 0; iai < nai; iai++ ) {
 		FD_SET(sockary[iai], &rfds);
+		if ( FD_ISSET( sockary[iai], &rfds ) ) {
+#ifdef DEBUG
+		  printf("sockary %d in rfds\n", sockary[iai]);
+		  fflush(stdout);
+#endif
+		}
 	    }
+	    
 	    maxsock = -1;
 	    for( iai = 0; iai < nai; iai++ ) {
 		if ( maxsock < sockary[iai] ) {
 		    maxsock = sockary[iai];
+#ifdef DEBUG
+		    printf("sockary %d\n", sockary[iai]);
+		    fflush(stdout);
+#endif
 		}
 	    }
-	    
+#ifdef DEBUG
+	    printf("maxsock %d\n", maxsock);
+	    fflush(stdout);
+#endif
 	    /* set timeout 1 sec */
 	    timeout.tv_sec = 1;
 	    timeout.tv_usec = 0;
-	    
-	    rrcv = recv(sock, &dummy, 0, 0);
-#ifdef DEBUG
-	    perror("ppstream_open: recv return code");
-	    printf("ppstream_open: cl: recv ret %zd\n",  rrcv);
-	    fflush(stdout);
-#endif
-	    
-	    if ( rselct = select(maxsock + 1, &rfds, NULL, NULL, &timeout) > 0 ) {
+	
+	    if ( ( rselct = select(maxsock + 1, &rfds, &rfds, NULL, &timeout) ) >= 0 ) {
 #ifdef DEBUG
 		printf("ppstream_open: cl: select: ret %d\n", rselct);
 		fflush(stdout);
 #endif
 		for( iai = 0; iai < nai; iai++ ) {
 		    if ( FD_ISSET( sockary[iai], &rfds ) ) {
-			rrcv = recv(sock, &dummy, sizeof(dummy), 0);
-			if ( rrcv > 0 ) {
-			    nd->pp_sock = sockary[iai];
-			    ai_id = iai;
+		        rrcv = recv(sockary[iai], &dummy, sizeof(dummy), MSG_DONTWAIT);
 #ifdef DEBUG
-			    printf("ppstream_opne: cl: recv: ret %zd\n", rrcv);
-			    fflush(stdout);
+			perror("ppstream_open: recv retrun code");
+			printf("ppstream_opne: iai %d cl: recv: ret %zd\n", iai, rrcv);
+			fflush(stdout);
 #endif
-			    goto connect_success;
+			if ( rrcv == -1 ) {
+			    if  ( errno == EAGAIN || errno == EWOULDBLOCK ) {
+			        nd->pp_sock = sockary[iai];
+				ai_id = iai;
+#ifdef DEBUG
+				printf("ppstream_opne: cl: recv: ret %zd\n", rrcv);
+				fflush(stdout);
+#endif
+				goto connect_success;
+			    }
+			    else {
+			      flag[iai] = 0;
+			      close(sockary[iai]);
+#ifdef DEBUG
+			      printf("socket close and set flag %d %d\n", sockary[iai], flag[iai]);
+			      fflush(stdout);
+#endif
+			    }
 			}
 		    }
 		}
 		sleep(1);
 	    }
+       	    else {
+#ifdef DEBUG
+	      printf("select time out\n");
+	      fflush(stdout);
+#endif
+	    }
 	}
-	/* connection is not success. */
-	goto exit;
     }
-    else{
+     else {
 	fprintf( stderr,
 		 "ppstream_open: error occurs, because of not seting PPSTREAM_CLIENT or PPSTREAM_SERVER. \n" );
 	goto exit;
@@ -952,6 +1015,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	    }
 	}
         freeaddrinfo(res);
+	free(sockary);
     }
     
     /* initialize variables of the communication thread. */
