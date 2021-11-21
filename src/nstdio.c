@@ -34,7 +34,7 @@ NHDL *nwrite( ND *nd, void *addr, size_t size){
 NHDL *nread( ND *nd, void *addr, size_t size){
     
     NHDL *hdl;
-    
+
     if (nd->pp_mode == PPSTREAM_MODE_WO){
         fprintf(stderr, "ND is write only mode");
         return NULL;

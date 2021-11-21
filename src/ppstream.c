@@ -8,7 +8,7 @@
 #include <netdb.h> 
 #include <errno.h> 
 #include <inttypes.h> // 32/64bit for printf format
-#include <time.h> // gettimeofday 
+#include <sys/time.h> // gettimeofday 
 #include <ppstream.h>
 
 /* command type */
@@ -400,7 +400,9 @@ static void *comm_thread_func(void *arnd){
                 /* check communication status */
                 check_comm_status( nd, &(nd->shdlq[sqidx]), PPSTREAM_WRITE, rc ); 
 #ifdef DEBUG
-                fprintf( stdout, "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " size %" PRIu64 " compsize %" PRIu64 " rc %d\n", 
+                fprintf( stdout,
+			 "comm_thread_func: PPSTREAM_WRITE: shd %" PRIu64 " size %"
+			 PRIu64 " compsize %" PRIu64 " rc %d\n", 
                          nd->pp_shqhead, nd->shdlq[sqidx].pp_size, nd->shdlq[sqidx].pp_compsize, rc );
                 fflush( stdout );
 #endif
@@ -414,6 +416,7 @@ static void *comm_thread_func(void *arnd){
         fprintf( stdout, "comm_thread_func: pthread_mutex_unlock\n" );
         fflush( stdout );
 #endif
+	
         pthread_mutex_unlock( &( nd->pp_mutex ) );
         
 	/* check the timout of connection. */
@@ -433,6 +436,7 @@ static void *comm_thread_func(void *arnd){
             fprintf( stdout, "comm_thread_func: server connect close.\n" );
             fflush( stdout );
 #endif
+
 	    FD_ZERO(&fds);
             FD_SET(nd->pp_socks, &fds);
             
@@ -448,16 +452,19 @@ static void *comm_thread_func(void *arnd){
                 sock_accept = accept( nd->pp_socks, nd->pp_ai->ai_addr, &addrlen );
                 if ( sock_accept > 0 ) {
                     nd->pp_sock = sock_accept;
+
 #ifdef DEBUG
                     fprintf( stdout, "comm_thread_func: the accept of server successes.\n" );
                     fflush( stdout );
 #endif
+
 		}
             }
         }
 	
 	/* if network descriptor closes, thread is finish. */
         if ( nd->pp_finflag == 1 ) {
+
 #ifdef DEBUG
             fprintf( stdout, "comm_thread_func: fin.\n" );
             fflush( stdout );
@@ -479,7 +486,7 @@ static void *comm_thread_func(void *arnd){
 ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, size_t size){
     
     ppstream_handle_t *hdl;
-    uint64_t id, qidx;
+    uint64_t id, qidx, hdlsize;
     
 #ifdef DEBUG
     fprintf( stdout, "ppstream_input: start.\n" );
@@ -489,12 +496,17 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     if ( nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
         return NULL;
     }
-
+    
+    hdlsize = nd->pp_shqtail - nd->pp_shqhead;
+    if ( hdlsize > MAX_HANDLE_QSIZE){
+        fprintf(stderr, "The INPUT handle queue DO NOT have any space.");
+        return NULL;
+    }
+    
     hdl = (ppstream_handle_t *)malloc(sizeof(ppstream_handle_t));
     if ( NULL == hdl ) {
         return NULL;
     }
-    
     memset(hdl, 0, sizeof(ppstream_handle_t));
     id = nd->pp_shqtail;
     qidx = id % MAX_HANDLE_QSIZE;
@@ -532,13 +544,19 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
 ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr, size_t size ){
     
     ppstream_handle_t *hdl;
-    uint64_t id, qidx;
-
+    uint64_t id, qidx, hdlsize;
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_output: start.\n" );
     fflush( stdout );
 #endif
+    
     if ( nd->pp_connect_status == PPSTREAM_UNCONNECTED ) {
+        return NULL;
+    }
+    hdlsize = nd->pp_rhqtail - nd->pp_rhqhead;
+    if ( hdlsize > MAX_HANDLE_QSIZE){
+        fprintf(stderr, "The OUTPUT handle queue DO NOT have any space.");
         return NULL;
     }
     
@@ -548,15 +566,16 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr,
     }
     memset(hdl, 0, sizeof(ppstream_handle_t));
     
+    /* access handle queue */
+    id = nd->pp_rhqtail;
+    qidx = id % MAX_HANDLE_QSIZE;
+
 #ifdef DEBUG
     fprintf( stdout, "ppstream_output: qidx %" PRIu64 " size %zd rhdlq %p\n", qidx ,size, nd->rhdlq );
     fflush( stdout );
 #endif
-    
-    /* access handle queue */
+
     pthread_mutex_lock( &( nd->pp_mutex ) );
-    id = nd->pp_rhqtail;
-    qidx = id % MAX_HANDLE_QSIZE;
     nd->rhdlq[qidx].pp_addr = ptr;
     nd->rhdlq[qidx].pp_size = size;
     nd->rhdlq[qidx].pp_compsize = 0;
@@ -571,6 +590,7 @@ ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr,
     hdl->nd = nd;
     hdl->pp_msize = 0;
     hdl->pp_hdltype = PPSTREAM_OUTPUT;
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_output: fin.\n" );
     fflush( stdout );
@@ -975,7 +995,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		        rrcv = recv(sockary[iai], &dummy, sizeof(dummy), MSG_DONTWAIT);
 #ifdef DEBUG
 			perror("ppstream_open: recv retrun code");
-			printf("ppstream_opne: iai %d cl: recv: ret %zd\n", iai, rrcv);
+			printf("ppstream_open: iai %d cl: recv: ret %zd\n", iai, rrcv);
 			fflush(stdout);
 #endif
 			if ( rrcv == -1 ) {
@@ -983,7 +1003,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 			        nd->pp_sock = sockary[iai];
 				ai_id = iai;
 #ifdef DEBUG
-				printf("ppstream_opne: cl: recv: ret %zd\n", rrcv);
+				printf("ppstream_open: cl: recv: ret %zd\n", rrcv);
 				fflush(stdout);
 #endif
 				goto connect_success;
