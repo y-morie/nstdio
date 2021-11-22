@@ -1,4 +1,4 @@
-NSTDIO Library
+N-STDIO Library
 ==============
 
 0. Overview
@@ -13,7 +13,7 @@ NSTDIO Library
 ---------------
 The simplest way to install N-STDIO library is typically a combination of 
 running "configure" and "make".  Execute the following commands to install 
-the ACP library system from within the directory at the top of the tree:
+the N-STDIO library system from within the directory at the top of the tree:
 
 shell$ ./configure --prefix=/where/to/install
 [...lots of output...]
