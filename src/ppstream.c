@@ -27,7 +27,7 @@
 
 /* set default environment value */
 #define PPSTREAM_DTIMEOUT    8
-#define PPSTREAM_DCNTIMEOUT 16
+#define PPSTREAM_DCNTIMEOUT 32
 #define PPSTREAM_DSEGMENT 1024 * 1024 * 2
 
 /* network status */
@@ -48,6 +48,7 @@ double gettimeofday_sec(){
 }
 
 /* get segment size */
+
 size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hdlq ) {
     
     size_t rdata; // rest of data size. 
@@ -653,30 +654,6 @@ int ppstream_test( ppstream_handle_t *hdl ){
     return rc;
 }
 
-/* synchronization for nd */
-void ppstream_sync(ppstream_networkdescriptor_t *nd){
-    
-    char dummy;
-    
-    dummy = 'x';
-    
-#ifdef DEBUG
-    fprintf(stdout, "ppstream_sync: start.\n");
-    fprintf(stdout, "ppstream_sync: nd->sock = %d.\n", nd->pp_sock);
-    fflush(stdout);
-#endif
-    
-    write(nd->pp_sock, &dummy, sizeof(dummy));
-    recv(nd->pp_sock, &dummy, sizeof(dummy), MSG_WAITALL);
-    
-#ifdef DEBUG
-    fprintf(stdout, "ppstream_sync: fin.\n");
-    fflush(stdout);
-#endif
-    
-    return;
-}
-
 ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
     /* socket descriptor */
@@ -876,10 +853,10 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	while ( 1 ) {
 	    et = gettimeofday_sec();
 	    if ( et - st > nd->pp_set_cntimeout ) {
-#ifdef DEBUG
+	      //#ifdef DEBUG
 		fprintf(stdout, "ppstream_open: client: timeout.\n");
 		fflush( stdout );
-#endif
+		//#endif
 		for ( iai = 0; iai < nai; iai++ ) {
 		    close(sockary[iai]);
 		}
@@ -1106,6 +1083,38 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
 
     return ;
 }
+
+
+/* synchronization for nd */
+void ppstream_sync(ppstream_networkdescriptor_t *nd){
+    
+    char dummy;
+    ppstream_handle_t *ihdl, *ohdl;
+    
+    dummy = 'x';
+    
+#ifdef DEBUG
+    fprintf(stdout, "ppstream_sync: start.\n");
+    fprintf(stdout, "ppstream_sync: nd->sock = %d.\n", nd->pp_sock);
+    fflush(stdout);
+#endif
+
+    ihdl = ppstream_input(nd, &dummy, sizeof(dummy));
+    ohdl = ppstream_output(nd, &dummy, sizeof(dummy));
+    while( ppstream_test(ihdl) );
+    while( ppstream_test(ohdl) );
+    
+#ifdef DEBUG
+    fprintf(stdout, "ppstream_sync: fin.\n");
+    fflush(stdout);
+#endif
+    
+    free(ihdl);
+    free(ohdl);
+
+    return;
+}
+
 
 ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t devflag){
 
