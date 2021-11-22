@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([nstdio], [0.1.0], [ykmorie@gmail.com])
+AC_INIT([nstdio], [0.9.0], [ykmorie@gmail.com])
 AC_CONFIG_SRCDIR([example/test-perfc.c])
 AC_CONFIG_SRCDIR([include/nstdio.h])
 AC_CONFIG_SRCDIR([include/ppstream.h])
