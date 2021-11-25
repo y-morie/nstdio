@@ -3,12 +3,12 @@
 
 AC_PREREQ([2.69])
 AC_INIT([nstdio], [0.9.0], [ykmorie@gmail.com])
-AC_CONFIG_SRCDIR([example/test-perfc.c])
-AC_CONFIG_SRCDIR([include/nstdio.h])
-AC_CONFIG_SRCDIR([include/ppstream.h])
+AC_CONFIG_SRCDIR([src])
+AC_CONFIG_SRCDIR([include])
 AC_CONFIG_HEADERS([config/config.h])
 AC_CONFIG_MACRO_DIR(config)
 AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_MAINTAINER_MODE
 
 # Checks for programs.
 AC_PROG_CC
