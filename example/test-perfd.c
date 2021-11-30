@@ -14,10 +14,10 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
-#define DCOUNT 1024LLU * 1024LLU
+#define DCOUNT 1024LLU * 1024LLU * 32LLU
 #define SIZE (DCOUNT * 8LLU)
-
-int ncomm[21]={
+/*
+int ncomm[24]={
 	     1000,
 	     1000,
 	     1000,
@@ -39,15 +39,45 @@ int ncomm[21]={
 	     10,
 	     10,
 	     10
+	     };*/
+
+int ncomm[27]={
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     64,
+	     64,
+	     32,
+	     32,
+	     32,
+	     20,
+	     20,
+	     20,
+	     20,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10
 };
 
 int main(int argc, char **argv) {
     NET *nt;
     ND *nd;
     NHDL *hdl;
-    int i, j, k;
+    int j, k;
     int count;
-    uint64_t ui;
+    uint64_t ui, i;
     uint64_t *str;
     double st, et;
     

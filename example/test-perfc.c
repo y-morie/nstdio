@@ -14,9 +14,9 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
-#define DCOUNT 1024LLU * 1024LLU
+#define DCOUNT 1024LLU * 1024LLU * 32LLU
 #define SIZE (DCOUNT * 8LLU)
-
+/* 
 int ncomm[21]={
 	     1000,
 	     1000,
@@ -38,6 +38,39 @@ int ncomm[21]={
 	     20,
 	     10,
 	     10,
+	     10,
+	     10,
+	     10,
+	     10
+};
+*/
+int ncomm[27]={
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     100,
+	     64,
+	     64,
+	     32,
+	     32,
+	     32,
+	     20,
+	     20,
+	     20,
+	     20,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
+	     10,
 	     10
 };
 
@@ -45,11 +78,11 @@ int main(int argc, char **argv) {
     NET *nt;
     ND *nd;
     NHDL *hdl;
-    int i, j, k;
+    int j, k;
     int count;
-    uint64_t ui;
+    uint64_t ui, i;
     uint64_t *str;
-    double st, et;
+    double st, et, owtime;
     
     if (argc != 3) {
       fprintf(stderr, "command error \n");
@@ -88,7 +121,9 @@ int main(int argc, char **argv) {
 	while (nquery(hdl));
       }
       et = gettimeofday_sec();
-      printf("cl: size %d time %f msec \n", i, (et-st)/ncomm[k]*1000);
+      owtime = ( et - st ) / 2 / ncomm[k];
+      
+      printf("cl: size %llu time %f msec BW %f \n", i, owtime*1000, (i/owtime)/1000000);
       k++;
     }
     
