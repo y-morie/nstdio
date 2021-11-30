@@ -108,9 +108,9 @@ int main(int argc, char **argv) {
     
     count = 1;
     k = 0;
-    for (i = 8; i <= SIZE; i=i*2) {
+    for (i = 1; i <= SIZE; i=i*2) {
       nsync(nd);
-      for (j = 0; j < ncomm[k]; j++){
+      for (j = 0; j < 20/*ncomm[k]*/; j++){
 	hdl = nread(nd, str, i);
 	while (nquery(hdl));
 	hdl = nwrite(nd, str, i);
