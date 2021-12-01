@@ -16,8 +16,8 @@ double gettimeofday_sec(){
 
 #define DCOUNT 1024LLU * 1024LLU * 32LLU
 #define SIZE (DCOUNT * 8LLU)
-/*
-int ncomm[24]={
+/* 
+int ncomm[21]={
 	     1000,
 	     1000,
 	     1000,
@@ -38,9 +38,12 @@ int ncomm[24]={
 	     20,
 	     10,
 	     10,
+	     10,
+	     10,
+	     10,
 	     10
-	     };*/
-
+};
+*/
 int ncomm[27]={
 	     100,
 	     100,
@@ -79,49 +82,54 @@ int main(int argc, char **argv) {
     int count;
     uint64_t ui, i;
     uint64_t *str;
-    double st, et;
+    double st, et, owtime;
     
-    if (argc != 2) {
-        fprintf(stderr, "command error \n");
-        fprintf(stderr, "%s port \n", argv[0]);
-        exit(1);
+    if (argc != 3) {
+      fprintf(stderr, "command error \n");
+      fprintf(stderr, "%s host port \n", argv[0]);
+      exit(1);
     }
     
     str = (uint64_t *)malloc(SIZE);
     if(str == NULL){
-        printf("malloc error \n");
-        return 0;
+      printf("malloc error \n");
+      return 0;
     }
     
-    nt = setnet(NULL, argv[1], NTCP);
-    printf("sv: start nopen \n");
-    nd = nopen(nt, "s");
+    nt = setnet(argv[1], argv[2], NTCP);
+    printf("cl: start nopen \n");
+    nd = nopen(nt, "c");
     if ( NULL == nd ) {
-      printf("sv: nopen failed. \n");
+      printf("cl: nopen failed. \n");
       exit(1);
     } 
-    printf("sv: finish nopen \n");
+    printf("cl: finish nopen \n");
     
     for (ui = 0; ui < DCOUNT;ui++) {
-        str[ui] = 0;
+      str[ui] = 0;
     }
     
     count = 1;
     k = 0;
     for (i = 1; i <= SIZE; i=i*2) {
-      nsync(nd);
+      st = gettimeofday_sec();
       for (j = 0; j < 1/*ncomm[k]*/; j++){
+	nsync(nd);
 	hdl = nread(nd, str, i);
 	while (nquery(hdl));
 	hdl = nwrite(nd, str, i);
 	while (nquery(hdl));
       }
+      et = gettimeofday_sec();
+      owtime = ( et - st ) / 2 / 1/*ncomm[k]*/;
+      
+      printf("cl: size %llu time %f msec BW %f \n", i, owtime*1000, (i/owtime)/1000000);
       k++;
     }
     
     nclose(nd);
     freenet(nt);
-    printf("sv: finish \n");
+    printf("cl: finish \n");
 
     return 0;
 }

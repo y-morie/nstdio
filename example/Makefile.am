@@ -4,7 +4,7 @@
 
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/src/include
 LDADD = $(top_builddir)/src/libnstdio.la $(top_builddir)/src/libppstream.la
-noinst_PROGRAMS = sv cl pc fe node test-ping test-pingd test-pingc test-perfd test-perfc test-perfi
+noinst_PROGRAMS = sv cl pc fe node test-ping test-pingd test-pingc test-perfd test-perfc test-perfi test-perfl
 
 sv_DEPENDENCIES = $(LDADD)
 sv_SOURCES = test-sv.c 
@@ -38,5 +38,8 @@ test_perfc_SOURCES = test-perfc.c
 
 test_perfi_DEPENDENCIES = $(LDADD)
 test_perfi_SOURCES = test-perfi.c
+
+test_perfl_DEPENDENCIES = $(LDADD)
+test_perfl_SOURCES = test-perfl.c
 
 

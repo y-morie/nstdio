@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     k = 0;
     for (i = 1; i <= SIZE; i=i*2) {
       st = gettimeofday_sec();
-      for (j = 0; j < 20/*ncomm[k]*/; j++){
+      for (j = 0; j < 1/*ncomm[k]*/; j++){
 	nsync(nd);
 	hdl = nwrite(nd, str, i);
 	while (nquery(hdl));
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 	while (nquery(hdl));
       }
       et = gettimeofday_sec();
-      owtime = ( et - st ) / 2 / 20/*ncomm[k]*/;
+      owtime = ( et - st ) / 2 / 1/*ncomm[k]*/;
       
       printf("cl: size %llu time %f msec BW %f \n", i, owtime*1000, (i/owtime)/1000000);
       k++;
