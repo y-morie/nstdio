@@ -14,55 +14,30 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
-#define DCOUNT 1024LLU * 1024LLU * 32LLU
+#define DCOUNT 1024LLU * 1024LLU * 128LLU
 #define SIZE (DCOUNT * 8LLU)
-/* 
-int ncomm[21]={
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     1000,
-	     640,
-	     640,
-	     320,
-	     160,
-	     80,
-	     40,
+
+int ncomm[29]={
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
 	     20,
 	     20,
 	     20,
 	     10,
 	     10,
-	     10,
-	     10,
-	     10,
-	     10
-};
-*/
-int ncomm[27]={
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     64,
-	     64,
-	     32,
-	     32,
-	     32,
-	     20,
-	     20,
-	     20,
-	     20,
 	     10,
 	     10,
 	     10,
@@ -111,17 +86,17 @@ int main(int argc, char **argv) {
     
     count = 1;
     k = 0;
-    for (i = 1; i <= SIZE; i=i*2) {
+    for (i = 8; i <= SIZE; i=i*2) {
+      nsync(nd);
       st = gettimeofday_sec();
-      for (j = 0; j < 1/*ncomm[k]*/; j++){
-	nsync(nd);
+      for (j = 0; j < ncomm[k]; j++){
 	hdl = nwrite(nd, str, i);
 	while (nquery(hdl));
 	hdl = nread(nd, str, i);
 	while (nquery(hdl));
       }
       et = gettimeofday_sec();
-      owtime = ( et - st ) / 2 / 1/*ncomm[k]*/;
+      owtime = ( et - st ) / 2 / ncomm[k];
       
       printf("cl: size %llu time %f msec BW %f \n", i, owtime*1000, (i/owtime)/1000000);
       k++;

@@ -95,7 +95,7 @@ host_triplet = @host@
 noinst_PROGRAMS = sv$(EXEEXT) cl$(EXEEXT) pc$(EXEEXT) fe$(EXEEXT) \
 	node$(EXEEXT) test-ping$(EXEEXT) test-pingd$(EXEEXT) \
 	test-pingc$(EXEEXT) test-perfd$(EXEEXT) test-perfc$(EXEEXT) \
-	test-perfi$(EXEEXT) test-perfl$(EXEEXT)
+	test-perfi$(EXEEXT) test-perfl$(EXEEXT) test-perfb$(EXEEXT)
 subdir = example
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/libtool.m4 \
@@ -130,6 +130,9 @@ pc_LDADD = $(LDADD)
 am_sv_OBJECTS = test-sv.$(OBJEXT)
 sv_OBJECTS = $(am_sv_OBJECTS)
 sv_LDADD = $(LDADD)
+am_test_perfb_OBJECTS = test-perfb.$(OBJEXT)
+test_perfb_OBJECTS = $(am_test_perfb_OBJECTS)
+test_perfb_LDADD = $(LDADD)
 am_test_perfc_OBJECTS = test-perfc.$(OBJEXT)
 test_perfc_OBJECTS = $(am_test_perfc_OBJECTS)
 test_perfc_LDADD = $(LDADD)
@@ -168,10 +171,11 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/test-cl.Po ./$(DEPDIR)/test-fe.Po \
 	./$(DEPDIR)/test-node.Po ./$(DEPDIR)/test-pc.Po \
-	./$(DEPDIR)/test-perfc.Po ./$(DEPDIR)/test-perfd.Po \
-	./$(DEPDIR)/test-perfi.Po ./$(DEPDIR)/test-perfl.Po \
-	./$(DEPDIR)/test-ping.Po ./$(DEPDIR)/test-pingc.Po \
-	./$(DEPDIR)/test-pingd.Po ./$(DEPDIR)/test-sv.Po
+	./$(DEPDIR)/test-perfb.Po ./$(DEPDIR)/test-perfc.Po \
+	./$(DEPDIR)/test-perfd.Po ./$(DEPDIR)/test-perfi.Po \
+	./$(DEPDIR)/test-perfl.Po ./$(DEPDIR)/test-ping.Po \
+	./$(DEPDIR)/test-pingc.Po ./$(DEPDIR)/test-pingd.Po \
+	./$(DEPDIR)/test-sv.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -192,15 +196,16 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(cl_SOURCES) $(fe_SOURCES) $(node_SOURCES) $(pc_SOURCES) \
-	$(sv_SOURCES) $(test_perfc_SOURCES) $(test_perfd_SOURCES) \
-	$(test_perfi_SOURCES) $(test_perfl_SOURCES) \
-	$(test_ping_SOURCES) $(test_pingc_SOURCES) \
-	$(test_pingd_SOURCES)
-DIST_SOURCES = $(cl_SOURCES) $(fe_SOURCES) $(node_SOURCES) \
-	$(pc_SOURCES) $(sv_SOURCES) $(test_perfc_SOURCES) \
+	$(sv_SOURCES) $(test_perfb_SOURCES) $(test_perfc_SOURCES) \
 	$(test_perfd_SOURCES) $(test_perfi_SOURCES) \
 	$(test_perfl_SOURCES) $(test_ping_SOURCES) \
 	$(test_pingc_SOURCES) $(test_pingd_SOURCES)
+DIST_SOURCES = $(cl_SOURCES) $(fe_SOURCES) $(node_SOURCES) \
+	$(pc_SOURCES) $(sv_SOURCES) $(test_perfb_SOURCES) \
+	$(test_perfc_SOURCES) $(test_perfd_SOURCES) \
+	$(test_perfi_SOURCES) $(test_perfl_SOURCES) \
+	$(test_ping_SOURCES) $(test_pingc_SOURCES) \
+	$(test_pingd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -370,6 +375,8 @@ test_perfi_DEPENDENCIES = $(LDADD)
 test_perfi_SOURCES = test-perfi.c
 test_perfl_DEPENDENCIES = $(LDADD)
 test_perfl_SOURCES = test-perfl.c
+test_perfb_DEPENDENCIES = $(LDADD)
+test_perfb_SOURCES = test-perfb.c
 all: all-am
 
 .SUFFIXES:
@@ -433,6 +440,10 @@ sv$(EXEEXT): $(sv_OBJECTS) $(sv_DEPENDENCIES) $(EXTRA_sv_DEPENDENCIES)
 	@rm -f sv$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(sv_OBJECTS) $(sv_LDADD) $(LIBS)
 
+test-perfb$(EXEEXT): $(test_perfb_OBJECTS) $(test_perfb_DEPENDENCIES) $(EXTRA_test_perfb_DEPENDENCIES) 
+	@rm -f test-perfb$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(test_perfb_OBJECTS) $(test_perfb_LDADD) $(LIBS)
+
 test-perfc$(EXEEXT): $(test_perfc_OBJECTS) $(test_perfc_DEPENDENCIES) $(EXTRA_test_perfc_DEPENDENCIES) 
 	@rm -f test-perfc$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(test_perfc_OBJECTS) $(test_perfc_LDADD) $(LIBS)
@@ -471,6 +482,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-fe.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-node.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-pc.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-perfb.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-perfc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-perfd.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-perfi.Po@am__quote@ # am--include-marker
@@ -644,6 +656,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/test-fe.Po
 	-rm -f ./$(DEPDIR)/test-node.Po
 	-rm -f ./$(DEPDIR)/test-pc.Po
+	-rm -f ./$(DEPDIR)/test-perfb.Po
 	-rm -f ./$(DEPDIR)/test-perfc.Po
 	-rm -f ./$(DEPDIR)/test-perfd.Po
 	-rm -f ./$(DEPDIR)/test-perfi.Po
@@ -701,6 +714,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/test-fe.Po
 	-rm -f ./$(DEPDIR)/test-node.Po
 	-rm -f ./$(DEPDIR)/test-pc.Po
+	-rm -f ./$(DEPDIR)/test-perfb.Po
 	-rm -f ./$(DEPDIR)/test-perfc.Po
 	-rm -f ./$(DEPDIR)/test-perfd.Po
 	-rm -f ./$(DEPDIR)/test-perfi.Po

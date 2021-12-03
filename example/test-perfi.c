@@ -14,28 +14,30 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
-#define DCOUNT 1024LLU * 1024LLU * 32LLU
+#define DCOUNT 1024LLU * 1024LLU * 128LLU
 #define SIZE (DCOUNT * 8LLU)
 
-int ncomm[27]={
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     100,
-	     64,
-	     64,
-	     32,
-	     32,
-	     32,
+int ncomm[29]={
 	     20,
 	     20,
 	     20,
 	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     20,
+	     10,
+	     10,
 	     10,
 	     10,
 	     10,
@@ -94,10 +96,10 @@ int main(int argc, char **argv) {
     
     count = 1;
     k = 0;
-    for (i = 1; i <= SIZE; i=i*2) {
+    for (i = 8; i <= SIZE; i=i*2) {
       nsync(nd_bnport);
       nsync(nd_clport);
-      for (j = 0; j < 1/*ncomm[k]*/; j++){
+      for (j = 0; j < ncomm[k]; j++){
 	hdl = nread(nd_bnport, str, i);
 	while (nquery(hdl));
 	hdl = nwrite(nd_clport, str, i);

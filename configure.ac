@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
-AC_INIT([nstdio], [0.9.0], [ykmorie@gmail.com])
+AC_PREREQ([2.71])
+AC_INIT([nstdio],[0.9.0],[ykmorie@gmail.com])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_SRCDIR([include])
 AC_CONFIG_HEADERS([config/config.h])
@@ -13,7 +13,7 @@ AM_MAINTAINER_MODE
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lpthread':
