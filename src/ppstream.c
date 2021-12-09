@@ -778,23 +778,26 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         /* generates socket for server */
         if ((sock = socket (nd->pp_ai->ai_family, nd->pp_ai->ai_socktype, nd->pp_ai->ai_protocol)) < 0) {
             perror("ppstream_open: server: socket() failed");
+
             rc = -1;
             goto exit;
         }
         
         /* set socket option that can reuse address and port. */
 	on = 1;
-        rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
+	rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
         if (rc == -1) {
             fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
             goto exit;
         }
+	
 	on = 1;
 	rc = setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (const void*)&on, sizeof(on) );    
         if (rc == -1) {
 	  fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
 	  goto exit;
         }
+	
         /* bind a socket. */
         while ( bind(sock, nd->pp_ai->ai_addr, nd->pp_ai->ai_addrlen) < 0 ) {
             if (errno != EADDRINUSE) {
@@ -880,11 +883,18 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		    printf("create socket\n");
 		    fflush(stdout);
 #endif
-		    if ( ( sockary[iai] = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
+		    if ( ( sockary[iai] = socket( ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
 		        perror("ppstream_open: client: socket() failed");
 			rc = -1;
 			goto exit;
 		    }
+		    on = 1;
+		    rc = setsockopt( sockary[iai], IPPROTO_TCP, TCP_NODELAY, (const void*)&on, sizeof(on) );    
+		    if (rc == -1) {
+		      fprintf(stderr, "ppstream_open: client: setsockopt() failed: rc %d.\n", rc);
+	  goto exit;
+        }
+
 		    flag[iai] = 1;
 		    iai++;
 		}
