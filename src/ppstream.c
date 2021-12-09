@@ -5,6 +5,8 @@
 #include <unistd.h> // close
 #include <sys/socket.h>  // accept, bind
 #include <sys/ioctl.h> // ioctl
+#include <netinet/in.h> // ioctl
+#include <netinet/tcp.h> // ioctl
 #include <netdb.h> 
 #include <errno.h> 
 #include <inttypes.h> // 32/64bit for printf format
@@ -785,6 +787,11 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         if (rc == -1) {
             fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
             goto exit;
+        }
+	rc = setsockopt( sock, SOL_SOCKET, TCP_NODELAY, (const void*)&on, sizeof(on) );    
+        if (rc == -1) {
+	  fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
+	  goto exit;
         }
         /* bind a socket. */
         while ( bind(sock, nd->pp_ai->ai_addr, nd->pp_ai->ai_addrlen) < 0 ) {
