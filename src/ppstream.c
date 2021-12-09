@@ -783,12 +783,14 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         }
         
         /* set socket option that can reuse address and port. */
+	on = 1;
         rc = setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (const void*)&on, sizeof(on) );    
         if (rc == -1) {
             fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
             goto exit;
         }
-	rc = setsockopt( sock, SOL_SOCKET, TCP_NODELAY, (const void*)&on, sizeof(on) );    
+	on = 1;
+	rc = setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, (const void*)&on, sizeof(on) );    
         if (rc == -1) {
 	  fprintf(stderr, "ppstream_open: server: setsockopt() failed: rc %d.\n", rc);
 	  goto exit;
