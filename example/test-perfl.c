@@ -14,7 +14,7 @@ double gettimeofday_sec(){
     return (double)t.tv_sec + (double)t.tv_usec * 1e-6;
 }
 
-#define DCOUNT 1024LLU * 1024LLU * 128LLU
+#define DCOUNT 1024LLU * 1024LLU * 2LLU
 #define SIZE (DCOUNT * 8LLU)
 
 int ncomm[29]={
@@ -96,6 +96,7 @@ int main(int argc, char **argv) {
       }
       owtime = ( et - st ) / 2 / ncomm[k];
       k++;
+      printf("cl: fin %d\n", k);
     }
     
     nclose(nd);

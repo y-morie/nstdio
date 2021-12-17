@@ -42,7 +42,7 @@
 /* get time for connection timeout */
 double gettimeofday_sec(){
     
-    struct timeval t;
+  struct timeval t;
     
     gettimeofday(&t, NULL);
     
@@ -51,7 +51,8 @@ double gettimeofday_sec(){
 
 /* get segment size */
 
-size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hdlq ) {
+size_t get_segsize( ppstream_networkdescriptor_t *nd,
+		    ppstream_handlequeue_t *hdlq ) {
     
     size_t rdata; // rest of data size. 
     size_t set_segment; // set default segment size by user.
@@ -80,7 +81,8 @@ size_t get_segsize( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hd
     return segment_size;
 }
 
-void check_comm_status( ppstream_networkdescriptor_t *nd, ppstream_handlequeue_t *hdlq, int flag , ssize_t rc) {
+void check_comm_status( ppstream_networkdescriptor_t *nd,
+			ppstream_handlequeue_t *hdlq, int flag , ssize_t rc) {
     
 #ifdef DEBUG
     fprintf(stdout, "check_comm_status: start.\n");
@@ -247,7 +249,7 @@ static void *comm_thread_func(void *arnd){
 		    rqidx, & nd->rhdlq[rqidx]);
             goto exit;
         }
-
+	
 	/* handle is READ */
         if ( nd->rhdlq[rqidx].pp_type == PPSTREAM_READ) {
 	    switch (nd->rhdlq[rqidx].pp_status) {
@@ -295,7 +297,7 @@ static void *comm_thread_func(void *arnd){
 #endif
                 /* get segment size */
                 segment_size = get_segsize ( nd, &(nd->rhdlq[rqidx]) );
-
+		
                 /* recv data  */
                 rc = (ssize_t)recv(nd->pp_sock,
 				   nd->rhdlq[rqidx].pp_addr + nd->rhdlq[rqidx].pp_compsize,
@@ -392,7 +394,9 @@ static void *comm_thread_func(void *arnd){
                 segment_size = get_segsize ( nd, &(nd->shdlq[sqidx]) );
 		
                 /* send data  */
-                rc = ( ssize_t )send( nd->pp_sock, nd->shdlq[sqidx].pp_addr + nd->shdlq[sqidx].pp_compsize, segment_size, MSG_DONTWAIT );
+                rc = ( ssize_t )send( nd->pp_sock,
+				      nd->shdlq[sqidx].pp_addr + nd->shdlq[sqidx].pp_compsize,
+				      segment_size, MSG_DONTWAIT );
 
 #ifdef DEBUG
                 perror( "comm_thread_func: send return code" );
@@ -455,19 +459,19 @@ static void *comm_thread_func(void *arnd){
                 sock_accept = accept( nd->pp_socks, nd->pp_ai->ai_addr, &addrlen );
                 if ( sock_accept > 0 ) {
                     nd->pp_sock = sock_accept;
-
+		    
 #ifdef DEBUG
                     fprintf( stdout, "comm_thread_func: the accept of server successes.\n" );
                     fflush( stdout );
 #endif
-
+		    
 		}
             }
         }
 	
 	/* if network descriptor closes, thread is finish. */
         if ( nd->pp_finflag == 1 ) {
-
+	    
 #ifdef DEBUG
             fprintf( stdout, "comm_thread_func: fin.\n" );
             fflush( stdout );
@@ -486,7 +490,8 @@ static void *comm_thread_func(void *arnd){
     exit(1);
 }
 
-ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, size_t size){
+ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd,
+				   void *ptr, size_t size){
     
     ppstream_handle_t *hdl;
     uint64_t id, qidx, hdlsize;
@@ -544,7 +549,8 @@ ppstream_handle_t *ppstream_input( ppstream_networkdescriptor_t *nd, void *ptr, 
     return hdl;
 }
 
-ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd, void *ptr, size_t size ){
+ppstream_handle_t *ppstream_output( ppstream_networkdescriptor_t *nd,
+				    void *ptr, size_t size ){
     
     ppstream_handle_t *hdl;
     uint64_t id, qidx, hdlsize;
@@ -705,7 +711,8 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     
 #ifdef DEBUG    
     fprintf(stdout, "ppstream_open: start.\n");
-    fprintf(stdout, "ppstream_open: address %s port %s.\n", nt->pp_ipaddr, nt->pp_port);
+    fprintf(stdout, "ppstream_open: address %s port %s.\n",
+	    nt->pp_ipaddr, nt->pp_port);
     fflush(stdout);
 #endif 
     
@@ -778,7 +785,6 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
         /* generates socket for server */
         if ((sock = socket (nd->pp_ai->ai_family, nd->pp_ai->ai_socktype, nd->pp_ai->ai_protocol)) < 0) {
             perror("ppstream_open: server: socket() failed");
-
             rc = -1;
             goto exit;
         }
@@ -865,12 +871,12 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	while ( 1 ) {
 	    et = gettimeofday_sec();
 	    if ( et - st > nd->pp_set_cntimeout ) {
-	      //#ifdef DEBUG
+#ifdef DEBUG
 		fprintf(stdout, "ppstream_open: client: timeout.\n");
 		fflush( stdout );
-		//#endif
+#endif
 		for ( iai = 0; iai < nai; iai++ ) {
-		    close(sockary[iai]);
+		    close( sockary[iai] );
 		}
 		goto exit;
 	    }
@@ -884,17 +890,17 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		    fflush(stdout);
 #endif
 		    if ( ( sockary[iai] = socket( ai->ai_family, ai->ai_socktype, ai->ai_protocol ) ) < 0 ) {
-		        perror("ppstream_open: client: socket() failed");
+			perror("ppstream_open: client: socket() failed");
 			rc = -1;
 			goto exit;
 		    }
 		    on = 1;
 		    rc = setsockopt( sockary[iai], IPPROTO_TCP, TCP_NODELAY, (const void*)&on, sizeof(on) );    
-		    if (rc == -1) {
-		      fprintf(stderr, "ppstream_open: client: setsockopt() failed: rc %d.\n", rc);
-	  goto exit;
-        }
-
+		    if ( rc == -1 ) {
+			fprintf(stderr, "ppstream_open: client: setsockopt() failed: rc %d.\n", rc);
+			goto exit;
+		    }
+		    
 		    flag[iai] = 1;
 		    iai++;
 		}
@@ -903,24 +909,29 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	    /* make socket non-blocking */
 	    on = 1;
 	    for( iai = 0; iai < nai; iai++ ) {
-	      ioctl(sockary[iai], FIONBIO, &on);
+		rc = ioctl(sockary[iai], FIONBIO, &on);
+		if ( rc != 0 ) {
+		    fprintf(stderr, "ppstream_open: client: ioctl() failed: rc %d.\n", rc);
+		    goto exit;
+		}
 	    }
-
+	    
 	    /* connect ai->pp_addr */
 	    iai = 0;
 	    for ( ai = res; ai; ai = ai->ai_next ) {
 	        if ( connect(sockary[iai], ai->ai_addr, ai->ai_addrlen) < 0 ) {
 		    if ( errno == EISCONN ) {
-		      nd->pp_sock = sockary[iai];
-		      ai_id = iai;
+			nd->pp_sock = sockary[iai];
+			ai_id = iai;
 #ifdef DEBUG		      
-		      perror("0 connect()");
+			perror("0 connect()");
 #endif
-		      goto connect_success;
+			goto connect_success;
 		    }
 		    else {
 		        if ( errno != EINPROGRESS ) {
-			    if ( errno != EINTR && errno != EAGAIN && errno != ECONNREFUSED && errno != ECONNABORTED ) {
+			    if ( errno != EINTR && errno != EAGAIN
+				 && errno != ECONNREFUSED && errno != ECONNABORTED ) {
 #ifdef DEBUG
 			        perror("ppsream_open: client: connect() failed");
 #endif
@@ -950,15 +961,15 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		}
 		iai++;
 	    }
-	
-	    /* set filedescriptor set */
+	    
+	    /* set a file descriptor */
 	    FD_ZERO(&rfds);
 	    for( iai = 0; iai < nai; iai++ ) {
 		FD_SET(sockary[iai], &rfds);
 		if ( FD_ISSET( sockary[iai], &rfds ) ) {
 #ifdef DEBUG
-		  printf("sockary %d in rfds\n", sockary[iai]);
-		  fflush(stdout);
+		    printf("sockary %d in rfds\n", sockary[iai]);
+		    fflush(stdout);
 #endif
 		}
 	    }
@@ -980,7 +991,7 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	    /* set timeout 1 sec */
 	    timeout.tv_sec = 1;
 	    timeout.tv_usec = 0;
-	
+	    
 	    if ( ( rselct = select(maxsock + 1, &rfds, &rfds, NULL, &timeout) ) >= 0 ) {
 #ifdef DEBUG
 		printf("ppstream_open: cl: select: ret %d\n", rselct);
@@ -1005,11 +1016,11 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 				goto connect_success;
 			    }
 			    else {
-			      flag[iai] = 0;
-			      close(sockary[iai]);
+				flag[iai] = 0;
+				close(sockary[iai]);
 #ifdef DEBUG
-			      printf("socket close and set flag %d %d\n", sockary[iai], flag[iai]);
-			      fflush(stdout);
+				printf("socket close and set flag %d %d\n", sockary[iai], flag[iai]);
+				fflush(stdout);
 #endif
 			    }
 			}
@@ -1019,18 +1030,19 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 	    }
        	    else {
 #ifdef DEBUG
-	      printf("select time out\n");
-	      fflush(stdout);
+		printf("select time out\n");
+		fflush(stdout);
 #endif
 	    }
 	}
     }
-     else {
+    else {
 	fprintf( stderr,
-		 "ppstream_open: error occurs, because of not seting PPSTREAM_CLIENT or PPSTREAM_SERVER. \n" );
+		 "ppstream_open: error occurs, "
+		 "because of not seting PPSTREAM_CLIENT or PPSTREAM_SERVER. \n" );
 	goto exit;
     }
- 
+    
  connect_success:
     
     /* if client, free resources */
@@ -1040,8 +1052,9 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
 		close(sockary[iai]);
 	    }
 	}
-        freeaddrinfo(res);
-	free(sockary);
+        freeaddrinfo( res );
+	free( sockary );
+	free( flag );
     }
     
     /* initialize variables of the communication thread. */
@@ -1051,15 +1064,15 @@ ppstream_networkdescriptor_t *ppstream_open(ppstream_networkinfo_t *nt){
     /* create communication thread */
     rc = pthread_create( (pthread_t *)&( nd->pp_comm_thread_id ), NULL, comm_thread_func, (void *)nd );
     nd->pp_connect_status = PPSTREAM_CONNECTED;
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_open: fin.\n");
     fflush( stdout );
 #endif 
-
+    
     return (ppstream_networkdescriptor_t *)nd;
-
-exit:
+    
+ exit:
     
 #ifdef DEBUG
     fprintf( stdout, "ppstream_open: failed open ppstream: exit.\n");
@@ -1092,9 +1105,9 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
     }
     /* free the network descriptor */
     if ( NULL != nd ) {
-        free(nd);
+        free ( nd );
     }
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_close: fin.\n");
     fflush( stdout );
@@ -1105,7 +1118,7 @@ void ppstream_close(ppstream_networkdescriptor_t *nd){
 
 
 /* synchronization for nd */
-void ppstream_sync(ppstream_networkdescriptor_t *nd){
+void ppstream_sync( ppstream_networkdescriptor_t *nd ){
     
     char dummy;
     ppstream_handle_t *ihdl, *ohdl;
@@ -1117,7 +1130,7 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
     fprintf(stdout, "ppstream_sync: nd->sock = %d.\n", nd->pp_sock);
     fflush(stdout);
 #endif
-
+    
     ihdl = ppstream_input(nd, &dummy, sizeof(dummy));
     ohdl = ppstream_output(nd, &dummy, sizeof(dummy));
     while( ppstream_test(ihdl) );
@@ -1130,15 +1143,18 @@ void ppstream_sync(ppstream_networkdescriptor_t *nd){
     
     free(ihdl);
     free(ohdl);
-
+    
     return;
 }
 
 
-ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname, uint32_t scflag, uint32_t devflag){
+ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname,
+						 char *servname,
+						 uint32_t scflag,
+						 uint32_t devflag){
 
     ppstream_networkinfo_t *nt;
-
+    
 #ifdef DEBUG
     fprintf( stdout, "ppstream_set_networkinfo: start.\n");
     fflush( stdout );
@@ -1152,14 +1168,15 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     memset( nt, 0, sizeof(ppstream_networkinfo_t) );
 #ifdef DEBUG
     fprintf( stdout, 
-	     "ppstream_set_networkinfo: hostname %s servname %s nt->pp_ipaddr %s nt->pp_port %s.\n",
+	     "ppstream_set_networkinfo: "
+	     "hostname %s servname %s nt->pp_ipaddr %s nt->pp_port %s.\n",
 	     hostname, servname, nt->pp_ipaddr, nt->pp_port );
     fflush( stdout );
 #endif
-
+    
     /* set hostname on network info */
     if ( hostname != NULL ) {
-        nt->pp_ipaddr = strdup(hostname);
+        nt->pp_ipaddr = strdup( hostname );
     }
     else {
         nt->pp_ipaddr = NULL;
@@ -1167,7 +1184,7 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     
     /* set service name on network info */
     if ( servname != NULL ) {
-        nt->pp_port = strdup(servname);
+        nt->pp_port = strdup( servname );
     }
     else {
         nt->pp_port = NULL;
@@ -1185,7 +1202,8 @@ ppstream_networkinfo_t *ppstream_set_networkinfo(char *hostname, char *servname,
     
 #ifdef DEBUG
     fprintf( stdout, 
-	     "ppstream_set_networkinfo: hname %s sname %s ipaddr %s pp_port %s pp_set_timeout %f, pp_set_segment %zu\n", 
+	     "ppstream_set_networkinfo: "
+	     "hname %s sname %s ipaddr %s pp_port %s pp_set_timeout %f pp_set_segment %zu\n", 
              hostname, servname, nt->pp_ipaddr, nt->pp_port, nt->pp_set_timeout, nt->pp_set_segment );
     fprintf( stdout, "ppstream_set_networkinfo: fin.\n");
     fflush( stdout );
@@ -1213,7 +1231,8 @@ void ppstream_free_networkinfo(ppstream_networkinfo_t *nt){
     return;
 }
 
-void ppstream_set_cntimeout(ppstream_networkdescriptor_t *nd, double timeout) {
+void ppstream_set_cntimeout(ppstream_networkdescriptor_t *nd,
+			    double timeout) {
     
 #ifdef DEBUG
     fprintf( stdout, "ppstream_set_cntimeout: start.\n");
