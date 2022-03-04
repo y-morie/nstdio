@@ -1,22 +1,33 @@
-N-STDIO Library
+NSTDIO Library
 ==============
 
-0. Overview
-1. Installation
+1. Overview
+2. Installation
 
-0. Overview
+1. Overview
 -----------
+NSTDIO is communication library to connect amonng differnt site.
+For example, between IoT sensors group and a passively computer,
+between an analysis computer and a supercomputer are connected by using this.
+When it is needed to use, the program only use it.
+
+This library has four features.
+1. Simple and few interface like STDIO
+2. Dynamic connection by client/server type 
+3. Detection disconnection
+4. Asymchonous execution
 
 
-
-1. Installation
+2. Installation
 ---------------
-The simplest way to install N-STDIO library is typically a combination of 
+The simplest way to install NSTDIO library is typically a combination of 
 running "configure" and "make".  Execute the following commands to install 
-the N-STDIO library system from within the directory at the top of the tree:
+the NSTDIO library system from within the directory at the top of the tree:
 
 shell$ ./configure --prefix=/where/to/install
+
 [...lots of output...]
+
 shell$ make all install
 
 See INSTALL for more details.
