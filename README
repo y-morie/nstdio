@@ -7,8 +7,8 @@ NSTDIO Library
 1. Overview
 -----------
 NSTDIO is communication library to connect amonng differnt site.
-For example, between IoT sensors group and a passively computer,
-between an analysis computer and a supercomputer are connected by using this.
+For example, between IoT sensors group and a massively computer,
+between an analysis computer and a supercomputer are connected easily by using this.
 When it is needed to use, the program only use it.
 
 This library has four features.
