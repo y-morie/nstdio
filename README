@@ -9,10 +9,11 @@ NSTDIO Library
 NSTDIO is communication library to connect among differnt site.
 For example, between IoT sensors group and a massively computer,
 between an analysis computer and a supercomputer are connected easily by using this.
-We desighn this library so that only when communication is needed, the program uses  function in this library.
+We desighn this library so that only when communication is needed, 
+the program uses  function in this library.
 
 This library has four features.
-1. Simple and few interface like STDIO
+1. Simple and few interface like STDIO which is standard I/O libbray in C.
 2. Dynamic connection by client/server type 
 3. Detection disconnection
 4. Asymchonous execution
